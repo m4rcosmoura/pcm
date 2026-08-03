@@ -1243,18 +1243,34 @@ function printOrder(id){
 
 /* Ponto de entrada: inicializa o banco, carrega as listas, renderiza os dados
    e liga o polling que mantém a página sincronizada com o banco */
+/* Busca lists, inactiveLists e ordens em paralelo — são 3 chamadas independentes ao
+   backend (Apps Script). Rodar em sequência soma a latência das 3; em paralelo, o tempo
+   total é o da mais lenta. Isso é o maior peso no carregamento inicial da página. */
+async function fetchAllData(){
+  const [listsResult, inactiveResult, ordensResult] = await Promise.all([
+    PCMDB.getLists(),
+    PCMDB.getInactiveLists(),
+    PCMDB.getAllOrders()
+  ]);
+  lists = listsResult;
+  inactiveLists = inactiveResult;
+  ordens = ordensResult;
+}
 (async function init(){
   applyTheme(readStoredTheme());
-  await PCMDB.initDB();
-  lists = await PCMDB.getLists();
-  inactiveLists = await PCMDB.getInactiveLists();
+  /* initDB só confirma que a planilha/estrutura já existe — em uso normal (planilha já
+     criada) não precisa terminar antes das outras 3 chamadas, então roda junto. */
+  await Promise.all([PCMDB.initDB(), fetchAllData()]);
   Object.keys(ddState).forEach(renderDropdown);
-  await loadAndRender();
+  updateTabBadges();
+  renderTables();
+  renderKpis();
   window._pollController = PCMDB.subscribeChanges(async ()=>{
-    lists = await PCMDB.getLists();
-    inactiveLists = await PCMDB.getInactiveLists();
+    await fetchAllData();
     Object.keys(ddState).forEach(renderDropdown);
-    await loadAndRender();
+    updateTabBadges();
+    renderTables();
+    renderKpis();
   });
 })();
 

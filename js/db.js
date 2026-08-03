@@ -7,71 +7,41 @@
    Migração para Google Sheets por Claude (Anthropic)
 ───────────────────────────────────────── */
 
-/* Lê a URL do Web App do config.js carregado antes deste arquivo */
-const GS_URL =
-  (window.APP_CONFIG && window.APP_CONFIG.GS_URL) || '';
+const GS_URL = (window.APP_CONFIG && window.APP_CONFIG.GS_URL) || '';
+const CHANNEL_NAME    = 'pcm_operador_channel';
+const STRUCTURE_TAG   = 'base_google_sheets_v1';
+/* 30s em vez de 5s: a cada poll o app faz 3 chamadas ao Apps Script (getLists,
+   getInactiveLists, getAllOrders). Com várias abas abertas ao mesmo tempo, um
+   intervalo curto empilha muitas requisições simultâneas contra o limite de
+   execuções concorrentes do Apps Script, o que pode travar/enfileirar chamadas. */
+const POLL_INTERVAL_MS = 30000;
 
-/* Nome do canal usado para avisar outras abas quando os dados mudam */
-const CHANNEL_NAME = 'pcm_operador_channel';
-
-/* Tag que identifica a versão da estrutura — muda se o schema mudar */
-const STRUCTURE_TAG = 'base_google_sheets_v1';
-
-/* Intervalo de polling: a cada 5 segundos busca atualizações do banco */
-const POLL_INTERVAL_MS = 5000;
-
-/*
-  BroadcastChannel permite que duas abas do mesmo browser se comuniquem.
-  Quando uma aba salva uma OS, ela avisa as outras para recarregar.
-*/
 const channel = typeof BroadcastChannel !== 'undefined'
-  ? new BroadcastChannel(CHANNEL_NAME)
-  : null;
+  ? new BroadcastChannel(CHANNEL_NAME) : null;
 
-/* ── helpers internos ── */
-
-function structured(v){
-  return JSON.parse(JSON.stringify(v));
-}
+function structured(v){ return JSON.parse(JSON.stringify(v)); }
 
 function requireConfig(){
-  if(!GS_URL){
-    throw new Error('Configuração ausente. Preencha GS_URL no arquivo config/config.js.');
-  }
+  if(!GS_URL) throw new Error('Configuração ausente. Preencha GS_URL no arquivo config/config.js.');
 }
 
 /*
-  Chamada genérica ao Apps Script Web App.
-  Todas as operações passam por aqui — GET ou POST em JSON.
-  O Apps Script sempre responde com { ok: true, data: ... } ou { ok: false, error: "..." }
+  Todas as operações usam POST com JSON.
+  Isso evita qualquer problema de encoding de parâmetros na URL (GET).
+  O Apps Script lê o campo "action" do body para rotear a chamada.
 */
-async function call(action, payload = null){
+async function call(action, payload = {}){
   requireConfig();
-
-  let res;
-  if(payload === null){
-    /* Leitura: usa GET com parâmetro action */
-    res = await fetch(`${GS_URL}?action=${encodeURIComponent(action)}`, {
-      method: 'GET',
-      redirect: 'follow'
-    });
-  } else {
-    /* Escrita: usa POST com JSON */
-    res = await fetch(GS_URL, {
-      method: 'POST',
-      redirect: 'follow',
-      headers: { 'Content-Type': 'text/plain' }, /* text/plain evita preflight CORS */
-      body: JSON.stringify({ action, ...payload })
-    });
-  }
-
+  const res = await fetch(GS_URL, {
+    method:   'POST',
+    redirect: 'follow',
+    headers:  { 'Content-Type': 'text/plain' },
+    body:     JSON.stringify({ action, ...payload })
+  });
   const text = await res.text();
   let data;
-  try { data = JSON.parse(text); } catch(_) { data = { ok: false, error: text }; }
-
-  if(!data.ok){
-    throw new Error(data.error || `Erro na ação "${action}"`);
-  }
+  try { data = JSON.parse(text); } catch(_){ data = { ok: false, error: text }; }
+  if(!data.ok) throw new Error(data.error || `Erro na ação "${action}"`);
   return data.data;
 }
 
@@ -132,14 +102,13 @@ const DEFAULT_INACTIVE = {
 
 async function initDB(){
   requireConfig();
-  /* O Apps Script cuida de criar as abas na primeira execução */
   await call('init');
 }
 
 /* ── meta ── */
 
 async function getMetaRecord(id){
-  return call(`getMeta&id=${encodeURIComponent(id)}`);
+  return call('getMeta', { id });
 }
 
 async function upsertMeta(record){
@@ -174,11 +143,8 @@ async function toggleInactiveItem(listKey, value){
   const idx = inactive[listKey].findIndex(
     v => String(v).trim().toUpperCase() === String(value).trim().toUpperCase()
   );
-  if(idx >= 0){
-    inactive[listKey].splice(idx, 1);
-  } else {
-    inactive[listKey].push(value);
-  }
+  if(idx >= 0){ inactive[listKey].splice(idx, 1); }
+  else { inactive[listKey].push(value); }
   await setInactiveLists(inactive);
   return inactive;
 }
@@ -191,7 +157,7 @@ async function getAllOrders(){
 }
 
 async function getOrder(id){
-  const row = await call(`getOrder&id=${Number(id)}`);
+  const row = await call('getOrder', { id: Number(id) });
   return row || null;
 }
 
@@ -238,15 +204,15 @@ async function startOrder(id, dataInicio){
 async function finishOrder(id, payload = {}){
   const ordem = await getOrder(id);
   if(!ordem) throw new Error('OS não encontrada.');
-  ordem.status                = payload.status               || 'FINALIZADA';
-  ordem.data_fim              = payload.data_fim             || nowBR();
-  ordem.causa_raiz            = payload.causa_raiz           || ordem.causa_raiz           || '';
-  ordem.componente            = payload.componente           || ordem.componente           || '';
-  ordem.observacao_fechamento = payload.observacao_fechamento|| ordem.observacao_fechamento|| '';
-  ordem.o_que_feito           = payload.o_que_feito          || ordem.o_que_feito          || '';
-  ordem.o_que_falta           = payload.o_que_falta          || ordem.o_que_falta          || '';
+  ordem.status                = payload.status                || 'FINALIZADA';
+  ordem.data_fim              = payload.data_fim              || nowBR();
+  ordem.causa_raiz            = payload.causa_raiz            || ordem.causa_raiz            || '';
+  ordem.componente            = payload.componente            || ordem.componente            || '';
+  ordem.observacao_fechamento = payload.observacao_fechamento || ordem.observacao_fechamento || '';
+  ordem.o_que_feito           = payload.o_que_feito           || ordem.o_que_feito           || '';
+  ordem.o_que_falta           = payload.o_que_falta           || ordem.o_que_falta           || '';
   ordem.pendente              = !!payload.pendente;
-  ordem.os_origem             = payload.os_origem            || ordem.os_origem            || null;
+  ordem.os_origem             = payload.os_origem             || ordem.os_origem             || null;
   if(payload.data_inicio) ordem.data_inicio = payload.data_inicio;
   if(payload.data_fim)    ordem.data_fim    = payload.data_fim;
   return updateOrder(ordem);
@@ -270,10 +236,9 @@ async function exportBackup(){
 }
 
 async function importBackup(backup){
-  if(backup?.lists)   await setLists(backup.lists);
+  if(backup?.lists)    await setLists(backup.lists);
   if(backup?.inactive) await setInactiveLists(backup.inactive);
   if(Array.isArray(backup?.ordens)){
-    /* Envia o lote inteiro em uma única chamada para ser mais rápido */
     await call('importOrdens', { ordens: backup.ordens });
     notifyChange();
   }
@@ -283,7 +248,7 @@ async function importBackup(backup){
 
 function notifyChange(){
   if(channel){
-    try { channel.postMessage({ type: 'changed', at: Date.now() }); } catch(_) {}
+    try { channel.postMessage({ type: 'changed', at: Date.now() }); } catch(_){}
   }
 }
 
