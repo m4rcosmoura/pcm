@@ -1907,9 +1907,41 @@ async function fetchAllData(){
   inactiveLists = data.inactiveLists;
   ordens = data.ordens;
 }
+/* Mostra um aviso no topo da tela. Sem isso, uma falha de comunicação deixava a
+   página em branco sem explicação nenhuma para quem está usando. */
+function mostrarAvisoCarregamento(mensagem, tipo){
+  let box = document.getElementById('avisoCarregamento');
+  if(!box){
+    box = document.createElement('div');
+    box.id = 'avisoCarregamento';
+    box.style.cssText = 'margin:0 0 14px;padding:12px 16px;border-radius:10px;font-weight:600;font-size:14px;line-height:1.45';
+    const wrap = document.querySelector('main.wrap');
+    const titulo = wrap && wrap.querySelector('.title');
+    if(titulo) titulo.insertAdjacentElement('afterend', box);
+    else if(wrap) wrap.prepend(box);
+    else return;
+  }
+  const erro = tipo === 'erro';
+  box.style.background = erro ? 'rgba(220,38,38,.12)' : 'rgba(24,95,165,.12)';
+  box.style.color      = erro ? '#dc2626' : '#185FA5';
+  box.style.border     = `1px solid ${erro ? 'rgba(220,38,38,.4)' : 'rgba(24,95,165,.35)'}`;
+  box.textContent = mensagem;
+  box.style.display = 'block';
+}
+function esconderAvisoCarregamento(){
+  const box = document.getElementById('avisoCarregamento');
+  if(box) box.style.display = 'none';
+}
 (async function init(){
   applyTheme(readStoredTheme());
-  await fetchAllData();
+  mostrarAvisoCarregamento('Carregando dados do servidor... Isso pode levar alguns segundos.', 'info');
+  try {
+    await fetchAllData();
+    esconderAvisoCarregamento();
+  } catch(err){
+    mostrarAvisoCarregamento(`Não foi possível carregar os dados: ${err.message} — recarregue a página (Ctrl+F5) para tentar de novo.`, 'erro');
+    return; /* sem dados não há o que renderizar; o aviso fica visível na tela */
+  }
   renderAllDropdowns();
   renderCadastros();
   renderCadastroSearchResults();
@@ -1917,7 +1949,14 @@ async function fetchAllData(){
   renderTable();
   renderKpis();
   window._pollController = PCMDB.subscribeChanges(async ()=>{
-    await fetchAllData();
+    try {
+      await fetchAllData();
+      esconderAvisoCarregamento();
+    } catch(err){
+      /* Falha no polling não apaga o que já está na tela — só avisa. */
+      mostrarAvisoCarregamento(`Falha ao atualizar os dados: ${err.message} — os dados exibidos podem estar desatualizados.`, 'erro');
+      return;
+    }
     renderAllDropdowns();
     renderCadastros();
     renderCadastroSearchResults();
