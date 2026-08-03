@@ -1896,24 +1896,20 @@ document.getElementById('kpiDateClear')?.addEventListener('click', ()=>{
 
 /* Ponto de entrada: inicializa o banco, carrega as listas, renderiza os dados
    e liga o polling que mantém a página sincronizada com o banco */
-/* Busca lists, inactiveLists e ordens em paralelo — são 3 chamadas independentes ao
-   backend (Apps Script). Rodar em sequência soma a latência das 3; em paralelo, o tempo
-   total é o da mais lenta. Isso é o maior peso no carregamento inicial da página. */
+/* Busca init + lists + inactiveLists + ordens em UMA ÚNICA chamada ao Apps Script
+   (getInitialData). Antes eram até 4 chamadas separadas por carregamento — mesmo
+   em paralelo, isso gera 4 execuções simultâneas no Apps Script por pessoa que abre
+   a página, e o limite de execuções concorrentes do backend vira gargalo quando
+   várias pessoas usam ao mesmo tempo. Uma chamada só resolve isso na raiz. */
 async function fetchAllData(){
-  const [listsResult, inactiveResult, ordensResult] = await Promise.all([
-    PCMDB.getLists(),
-    PCMDB.getInactiveLists(),
-    PCMDB.getAllOrders()
-  ]);
-  lists = listsResult;
-  inactiveLists = inactiveResult;
-  ordens = ordensResult;
+  const data = await PCMDB.getInitialData();
+  lists = data.lists;
+  inactiveLists = data.inactiveLists;
+  ordens = data.ordens;
 }
 (async function init(){
   applyTheme(readStoredTheme());
-  /* initDB só confirma que a planilha/estrutura já existe — em uso normal (planilha já
-     criada) não precisa terminar antes das outras 3 chamadas, então roda junto. */
-  await Promise.all([PCMDB.initDB(), fetchAllData()]);
+  await fetchAllData();
   renderAllDropdowns();
   renderCadastros();
   renderCadastroSearchResults();
