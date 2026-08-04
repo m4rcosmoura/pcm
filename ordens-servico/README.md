@@ -1,85 +1,56 @@
-# PCM System — Ordens de Serviço
+# PCM — Ordens de Serviço
 
-Sistema de Planejamento e Controle de Manutenção.  
-Idealizado e desenvolvido por Marcos Moura.
+Sistema de Planejamento e Controle de Manutenção com frontend em HTML/JavaScript e banco no Google Planilhas por meio do Google Apps Script.
 
----
+## Comece por aqui
 
-## Estrutura do projeto
+Leia **`INSTALACAO_ATUALIZACAO.md`**. A atualização possui duas partes obrigatórias:
 
-```
-pcm-system/
+1. publicar o novo `apps-script/Code.gs` na implantação existente;
+2. substituir os arquivos do site.
+
+## Estrutura
+
+```text
+ordens-servico/
+├── apps-script/
+│   └── Code.gs
 ├── assets/
-│   ├── css/
-│   │   └── styles.css
-│   └── img/
-│       ├── operador.ico
-│       └── pcm.ico
 ├── config/
-│   ├── config.js          ← NÃO versionar (.gitignore)
-│   └── config.example.js  ← modelo, versionar este
-├── db/
-│   └── schema.sql         ← estrutura do banco Supabase
+│   ├── config.js
+│   └── config.example.js
 ├── js/
-│   ├── utils.js           ← helpers gerais (datas, escape, etc.)
-│   └── db.js              ← camada de acesso ao banco
+│   ├── db.js
+│   └── utils.js
 ├── pages/
-│   ├── operador.html      ← visão do operador
-│   └── pcm.html           ← visão do PCM (gestão completa)
-├── .gitignore
-├── CHANGELOG.md
-└── README.md
+│   ├── operador.html
+│   └── pcm.html
+├── operador.html
+├── pcm.html
+├── INSTALACAO_ATUALIZACAO.md
+└── CHANGELOG.md
 ```
 
----
+## Arquivos de acesso
+
+- `operador.html`: tela operacional.
+- `pcm.html`: tela de gestão PCM.
+- A pasta `pages/` contém versões com caminhos relativos para uso em servidor.
 
 ## Configuração
 
-1. Copie `config/config.example.js` para `config/config.js`
-2. Preencha com as credenciais do Supabase
-3. **Nunca envie `config.js` para o repositório**
+O arquivo `config/config.js` deve conter:
 
----
+- `GS_URL`: URL `/exec` da implantação do Apps Script;
+- `PCM_PASSWORD`: trava organizacional da tela PCM.
 
-## Banco de dados
+A senha no JavaScript não é segurança real. Qualquer segredo colocado no frontend pode ser lido pelo navegador.
 
-O arquivo `db/schema.sql` contém a estrutura completa do banco.  
-Execute no Supabase SQL Editor para criar as tabelas e políticas.
+## Principais melhorias desta versão
 
----
-
-## Acesso
-
-| Perfil   | Arquivo (uso local)  | URL (GitHub Pages)         |
-|----------|----------------------|----------------------------|
-| Operador | `operador.html`      | `/operador.html`           |
-| PCM      | `pcm.html`           | `/pcm.html`                |
-
-> Os HTMLs ficam na raiz do projeto para funcionar via `file://` durante o desenvolvimento.
-> A pasta `pages/` mantém cópias com caminhos ajustados para quando houver um servidor.
-
----
-
-## Ativar / Desativar cadastros
-
-Itens de **Local**, **Equipamento**, **Componente** e **Operador** podem ser desativados sem excluir histórico:
-
-1. Acesse a aba **Cadastros** no PCM
-2. Pesquise o item desejado
-3. Clique em **⛔ Desativar** (ou **✅ Ativar** para reativar)
-
-| Comportamento         | Detalhe |
-|-----------------------|---------|
-| Dropdowns             | Itens inativos **não aparecem** nas caixas de seleção |
-| Histórico de O.S.     | **Preservado** — nenhum dado é excluído |
-| Relatório de Cadastros | Inclui coluna `ativo` (SIM/NÃO) para rastreabilidade |
-| Backup                | O objeto `inactive` é exportado e importado junto com os dados |
-
----
-
-## Roadmap
-
-- [ ] Migração para servidor corporativo
-- [ ] Login com autenticação real (JWT)
-- [ ] Controle de acesso por perfil
-- [ ] Troca do banco de dados
+- consulta leve de versão antes de baixar o banco completo;
+- bloqueio de sincronizações automáticas sobrepostas;
+- cache local de contingência;
+- cache do Apps Script protegido contra reconstrução simultânea;
+- correção das consultas individuais de OS e metadados;
+- criação de OS com contador e inserção dentro do mesmo bloqueio.

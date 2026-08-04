@@ -470,6 +470,8 @@
    rowToStart / rowToClose: OS selecionada para iniciar ou finalizar (modo Operador)
    editingOrderId / editingCadastroIndex: edição em andamento (modo PCM) */
 let lists, ordens = [], rowToStart = null, rowToClose = null;
+let currentDataVersion = '';
+let dadosCarregados = false;
 let editingOrderId = null;
 let editingCadastroIndex = -1;
 /* Listas inativas — itens desativados não aparecem nos dropdowns */
@@ -683,23 +685,27 @@ function listForAll(key){
   return sortAlpha(lists[key] || []);
 }
 function selectedLabel(key){ const s = ddState[key]; if(s.multiple) return s.value; return s.value ? [s.value] : []; }
-/* Reconstrói o HTML de um dropdown a partir do estado atual. */
+/* Reconstrói todos os dropdowns que usam a mesma chave.
+   Local, equipamento e componente aparecem em mais de um modal; usar querySelector
+   renderizava somente a primeira ocorrência, que podia estar escondida. */
 function renderDropdown(key){
-  const host = document.querySelector(`.dd[data-dd="${key}"]`);
-  if(!host) return;
+  const hosts = document.querySelectorAll(`.dd[data-dd="${key}"]`);
+  if(!hosts.length) return;
   const cfg = ddState[key];
   const options = listFor(key).filter(v=>String(v).toLowerCase().includes((cfg.search||'').toLowerCase()));
   const chosen = selectedLabel(key);
-  host.innerHTML = `
-    <div class="dd-box ${host.dataset.open==='1'?'is-open':''}" data-dd-box="${key}">
-      ${chosen.length ? chosen.map(v=>`<span class="dd-chip">${PCMDB.escapeHtml(v)}${cfg.multiple?`<button type="button" data-dd-remove="${key}" data-value="${PCMDB.escapeHtml(v)}">×</button>`:''}</span>`).join('') : `<span class="dd-placeholder">Pesquisar e selecionar...</span>`}
-    </div>
-    <div class="dd-menu ${host.dataset.open==='1'?'is-open':''}">
-      <input class="dd-search" type="search" placeholder="Pesquisar..." value="${PCMDB.escapeHtml(cfg.search||'')}" data-dd-search="${key}">
-      <div class="dd-list">
-        ${options.length ? options.map(v=>`<div class="dd-item ${chosen.includes(v)?'is-selected':''}" data-dd-item="${key}" data-value="${PCMDB.escapeHtml(v)}">${PCMDB.escapeHtml(v)}</div>`).join('') : `<div class="dd-item" style="cursor:default;opacity:.6">Nenhum resultado</div>`}
+  hosts.forEach(host => {
+    host.innerHTML = `
+      <div class="dd-box ${host.dataset.open==='1'?'is-open':''}" data-dd-box="${key}">
+        ${chosen.length ? chosen.map(v=>`<span class="dd-chip">${PCMDB.escapeHtml(v)}${cfg.multiple?`<button type="button" data-dd-remove="${key}" data-value="${PCMDB.escapeHtml(v)}">×</button>`:''}</span>`).join('') : `<span class="dd-placeholder">Pesquisar e selecionar...</span>`}
       </div>
-    </div>`;
+      <div class="dd-menu ${host.dataset.open==='1'?'is-open':''}">
+        <input class="dd-search" type="search" placeholder="Pesquisar..." value="${PCMDB.escapeHtml(cfg.search||'')}" data-dd-search="${key}">
+        <div class="dd-list">
+          ${options.length ? options.map(v=>`<div class="dd-item ${chosen.includes(v)?'is-selected':''}" data-dd-item="${key}" data-value="${PCMDB.escapeHtml(v)}">${PCMDB.escapeHtml(v)}</div>`).join('') : `<div class="dd-item" style="cursor:default;opacity:.6">Nenhum resultado</div>`}
+        </div>
+      </div>`;
+  });
 }
 function renderAllDropdowns(){ Object.keys(ddState).forEach(renderDropdown); }
 function closeAllDropdowns(){ document.querySelectorAll('.dd').forEach(el=>{el.dataset.open='0';}); renderAllDropdowns(); }
@@ -1753,7 +1759,12 @@ function updateTabBadges(){
   });
 }
 /* Busca todas as OS do banco e redesenha a página inteira */
-async function loadAndRender(){ ordens = await PCMDB.getAllOrders(); updateTabBadges(); renderTables(); renderKpis(); }
+async function loadAndRender(){
+  await fetchAllData();
+  updateTabBadges();
+  renderTables();
+  renderKpis();
+}
 
 /* ── Modal Iniciar O.S. (modo Operador) ── */
 function closeConfirm(){
@@ -2022,11 +2033,13 @@ document.addEventListener('input', (e)=>{
   if(el===cadSearchInput) renderCadastroSearchResults();
   if(el.matches('[data-dd-search]')){
     const key=el.dataset.ddSearch;
+    const host=el.closest('.dd');
     const start=typeof el.selectionStart==='number'?el.selectionStart:null;
     const end=typeof el.selectionEnd==='number'?el.selectionEnd:start;
     ddState[key].search=el.value;
     renderDropdown(key);
-    const searchEl=document.querySelector(`.dd[data-dd="${key}"] .dd-search`);
+    /* Mantém o foco no dropdown em uso, não na primeira cópia escondida. */
+    const searchEl=host?.querySelector('.dd-search');
     if(searchEl){
       searchEl.focus();
       if(start!==null){
@@ -2254,11 +2267,26 @@ document.getElementById('btnSaveOS').addEventListener('click', async ()=>{
 });
 
 /* ── Inicialização ── */
-async function fetchAllData(){
-  const data = await PCMDB.getInitialData();
+function applyInitialData(data){
   lists = data.lists;
   inactiveLists = data.inactiveLists;
   ordens = data.ordens;
+  currentDataVersion = String(data.version ?? '');
+  dadosCarregados = true;
+}
+async function fetchAllData(){
+  const data = await PCMDB.getInitialData();
+  applyInitialData(data);
+  PCMDB.saveCachedInitialData(data);
+  return data;
+}
+function renderDadosCompletos(){
+  renderAllDropdowns();
+  renderCadastros();
+  renderCadastroSearchResults();
+  updateTabBadges();
+  renderTables();
+  renderKpis();
 }
 function mostrarAvisoCarregamento(mensagem, tipo){
   let box = document.getElementById('avisoCarregamento');
@@ -2285,37 +2313,48 @@ function esconderAvisoCarregamento(){
 }
 (async function init(){
   applyTheme(readStoredTheme());
-  searchInput.value = ""; /* alguns navegadores restauram o valor antigo do campo de busca ao recarregar a página — força ficar vazio no carregamento */
+  searchInput.value = ""; /* impede restauração automática de busca antiga */
   document.title = isPcmMode() ? 'PCM - Ordens de Serviço' : 'Operador - Ordens de Serviço';
   mostrarAvisoCarregamento('Carregando dados do servidor... Isso pode levar alguns segundos.', 'info');
+
   try {
     await fetchAllData();
     esconderAvisoCarregamento();
   } catch(err){
-    mostrarAvisoCarregamento(`Não foi possível carregar os dados: ${err.message} — recarregue a página (Ctrl+F5) para tentar de novo.`, 'erro');
-    return;
+    const cached = PCMDB.getCachedInitialData();
+    if(cached){
+      applyInitialData(cached);
+      mostrarAvisoCarregamento(
+        `Servidor temporariamente indisponível: ${err.message} — exibindo a última cópia salva neste computador.`,
+        'erro'
+      );
+    } else {
+      mostrarAvisoCarregamento(
+        `Não foi possível carregar os dados: ${err.message} — o sistema continuará tentando automaticamente.`,
+        'erro'
+      );
+    }
   }
-  renderAllDropdowns();
-  renderCadastros();
-  renderCadastroSearchResults();
-  updateTabBadges();
-  renderTables();
-  renderKpis();
+
+  if(dadosCarregados) renderDadosCompletos();
   if(isPcmMode()) ensureXlsxLoaded().catch(()=>{});
+
   window._pollController = PCMDB.subscribeChanges(async ()=>{
     try {
+      const serverVersion = await PCMDB.getDataVersion();
+      if(dadosCarregados && currentDataVersion && serverVersion === currentDataVersion){
+        esconderAvisoCarregamento();
+        return;
+      }
       await fetchAllData();
       esconderAvisoCarregamento();
+      renderDadosCompletos();
     } catch(err){
-      mostrarAvisoCarregamento(`Falha ao atualizar os dados: ${err.message} — os dados exibidos podem estar desatualizados.`, 'erro');
-      return;
+      mostrarAvisoCarregamento(
+        `Falha ao sincronizar: ${err.message} — os dados exibidos podem estar desatualizados.`,
+        'erro'
+      );
     }
-    renderAllDropdowns();
-    renderCadastros();
-    renderCadastroSearchResults();
-    updateTabBadges();
-    renderTables();
-    renderKpis();
   });
 })();
 

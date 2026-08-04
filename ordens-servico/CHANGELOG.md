@@ -1,3 +1,24 @@
+# Correção 2026-08-04 — Local e Equipamento na Nova OS
+
+- Corrigida a renderização dos dropdowns duplicados em diferentes modais.
+- Os campos Local e Equipamento voltam a aparecer na criação de nova OS.
+- Corrigida a manutenção do foco ao pesquisar nesses dropdowns.
+- Não exige alteração no Apps Script nem na planilha.
+
+---
+
+# Atualização 2026-08-04 — estabilidade de carregamento
+
+- Adicionado endpoint leve `getVersion`.
+- Download completo ocorre somente quando os dados mudam.
+- Proteção contra sincronizações automáticas sobrepostas.
+- Cache local para abertura em contingência.
+- Cache do Apps Script ampliado e protegido contra reconstrução simultânea.
+- Corrigidos parâmetros de `getOrder` e `getMeta`.
+- Bloqueio único na geração e inserção de novas OS.
+
+---
+
 # Changelog
 
 Todas as mudanças relevantes do projeto são registradas aqui.

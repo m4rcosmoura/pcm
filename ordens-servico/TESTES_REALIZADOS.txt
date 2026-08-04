@@ -1,0 +1,7 @@
+Validações executadas antes do empacotamento:
+
+- Sintaxe do js/db.js: OK
+- Sintaxe do apps-script/Code.gs: OK
+- Sintaxe dos scripts internos dos 4 arquivos HTML: OK
+- Teste simulado do frontend: getInitialData, getVersion, getOrder e cache local: OK
+- Teste simulado do backend: getVersion, getInitialData, addOrder, mudança de versão e recarga: OK

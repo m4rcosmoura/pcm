@@ -15,7 +15,10 @@ const GS_URL =
 const CHANNEL_NAME = 'pcm_operador_channel';
 
 /* Tag que identifica a versão da estrutura — muda se o schema mudar */
-const STRUCTURE_TAG = 'base_google_sheets_v1';
+const STRUCTURE_TAG = 'base_google_sheets_v2';
+
+/* Última cópia válida dos dados, usada quando o Google fica temporariamente indisponível. */
+const LOCAL_INITIAL_DATA_KEY = 'pcm_initial_data_cache_v2';
 
 /* Intervalo de polling: a cada 5 segundos busca atualizações do banco */
 /* 30s em vez de 5s: a cada poll o app faz 3 chamadas ao Apps Script (getLists,
@@ -197,7 +200,7 @@ async function initDB(){
 /* ── meta ── */
 
 async function getMetaRecord(id){
-  return call(`getMeta&id=${encodeURIComponent(id)}`);
+  return call('getMeta', { id });
 }
 
 async function upsertMeta(record){
@@ -228,10 +231,44 @@ async function getInactiveLists(){
 async function getInitialData(){
   const data = await call('getInitialData');
   return {
+    version:       String(data?.version ?? ''),
     lists:         structured(data?.lists || DEFAULT_LISTS),
     inactiveLists: structured(data?.inactiveLists || DEFAULT_INACTIVE),
     ordens:        Array.isArray(data?.ordens) ? data.ordens : []
   };
+}
+
+/* Consulta muito pequena: evita baixar novamente todo o banco quando nada mudou. */
+async function getDataVersion(){
+  return String((await call('getVersion')) ?? '');
+}
+
+function saveCachedInitialData(data){
+  try {
+    localStorage.setItem(LOCAL_INITIAL_DATA_KEY, JSON.stringify(data));
+    return true;
+  } catch(err){
+    console.warn('Não foi possível salvar o cache local dos dados:', err);
+    return false;
+  }
+}
+
+function getCachedInitialData(){
+  try {
+    const raw = localStorage.getItem(LOCAL_INITIAL_DATA_KEY);
+    if(!raw) return null;
+    const data = JSON.parse(raw);
+    if(!data || !Array.isArray(data.ordens)) return null;
+    return {
+      version:       String(data.version ?? ''),
+      lists:         structured(data.lists || DEFAULT_LISTS),
+      inactiveLists: structured(data.inactiveLists || DEFAULT_INACTIVE),
+      ordens:        data.ordens
+    };
+  } catch(err){
+    console.warn('Não foi possível ler o cache local dos dados:', err);
+    return null;
+  }
 }
 
 async function setLists(lists){
@@ -267,7 +304,7 @@ async function getAllOrders(){
 }
 
 async function getOrder(id){
-  const row = await call(`getOrder&id=${Number(id)}`);
+  const row = await call('getOrder', { id: Number(id) });
   return row || null;
 }
 
@@ -365,31 +402,53 @@ function notifyChange(){
 
 function onExternalChange(cb){
   /*
-    Duas razões independentes para pausar o poll: um modal de edição aberto
-    (_modalPaused, controlado pelos HTMLs via pause()/resume()) e a aba estar
-    em segundo plano (_hidden, controlado aqui). Só reativa quando NENHUMA
-    das duas estiver ativa — sem isso, uma aba esquecida aberta bate no
-    Apps Script a cada 30s o dia inteiro, mesmo sem ninguém olhando.
+    Pausa o poll com modal aberto ou aba oculta. Também agrupa disparos que
+    chegam enquanto uma sincronização ainda está em andamento: no máximo uma
+    nova execução fica pendente, impedindo crescimento infinito da fila.
   */
   const ctrl = {
     _modalPaused: false,
     _hidden: typeof document !== 'undefined' && document.visibilityState === 'hidden',
+    _running: false,
+    _pending: false,
+    _timer: null,
     pause(){  this._modalPaused = true;  },
-    resume(){ this._modalPaused = false; }
+    resume(){ this._modalPaused = false; },
+    stop(){ if(this._timer) clearInterval(this._timer); }
   };
   const deveIgnorar = () => ctrl._modalPaused || ctrl._hidden;
+
+  const executar = async () => {
+    if(deveIgnorar()) return;
+    if(ctrl._running){
+      ctrl._pending = true;
+      return;
+    }
+    ctrl._running = true;
+    try {
+      await cb?.();
+    } catch(err){
+      console.error('Falha na sincronização automática:', err);
+    } finally {
+      ctrl._running = false;
+      if(ctrl._pending && !deveIgnorar()){
+        ctrl._pending = false;
+        setTimeout(executar, 0);
+      }
+    }
+  };
+
   if(channel){
     channel.onmessage = (event) => {
-      if(event?.data?.type === 'changed' && !deveIgnorar()) cb?.();
+      if(event?.data?.type === 'changed') executar();
     };
   }
-  setInterval(() => { if(!deveIgnorar()) cb?.(); }, POLL_INTERVAL_MS);
+  ctrl._timer = setInterval(executar, POLL_INTERVAL_MS);
   if(typeof document !== 'undefined'){
     document.addEventListener('visibilitychange', () => {
       const estavaOculta = ctrl._hidden;
       ctrl._hidden = document.visibilityState === 'hidden';
-      /* Ao voltar a ficar visível, busca na hora em vez de esperar o próximo tick de 30s */
-      if(estavaOculta && !ctrl._hidden && !ctrl._modalPaused) cb?.();
+      if(estavaOculta && !ctrl._hidden && !ctrl._modalPaused) executar();
     });
   }
   return ctrl;
@@ -398,7 +457,8 @@ function onExternalChange(cb){
 /* ── API pública — idêntica ao db.js original ── */
 
 window.PCMDB = {
-  initDB, getInitialData,
+  initDB, getInitialData, getDataVersion,
+  saveCachedInitialData, getCachedInitialData,
   getLists, setLists,
   getInactiveLists, setInactiveLists, toggleInactiveItem,
   getAllOrders, getOrder, addOrder, updateOrder, startOrder, finishOrder, deleteOrder,
