@@ -3,20 +3,18 @@
 <!-- Idealizado e desenvolvido por Marcos Moura-->
 
 <head>
-<link rel="icon" href="assets/img/pcm.ico">
+<link rel="icon" href="./assets/img/operador.ico">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>PCM - Ordens de Serviço</title>
+<title>Operador - Ordens de Serviço</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Poppins:wght@600;700;900&display=swap" rel="stylesheet">
 
-<link rel="stylesheet" href="assets/css/styles.css">
-<script src="config/config.js"></script>
-<script src="js/utils.js"></script>
-<script src="js/db.js"></script>
-<!-- db.js atualizado: suporte a getInactiveLists / setInactiveLists / toggleInactiveItem -->
-<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+<link rel="stylesheet" href="./assets/css/styles.css">
+<script src="./config/config.js"></script>
+<script src="./js/utils.js"></script>
+<script src="./js/db.js"></script>
 <script>
 (function(){
   const key = 'pcm_theme';
@@ -25,15 +23,22 @@
     theme = localStorage.getItem(key) === 'dark' ? 'dark' : 'light';
   } catch (_) {}
   document.documentElement.setAttribute('data-theme', theme);
+  let mode = 'operador';
+  try {
+    mode = sessionStorage.getItem('pcm_mode') === 'pcm' ? 'pcm' : 'operador';
+  } catch (_) {}
+  document.documentElement.setAttribute('data-mode', mode);
 })();
 </script>
 </head>
 <body>
 <main class="wrap">
-  <h1 class="title">PCM - Ordens de Serviço</h1>
+  <h1 class="title">Ordens de Serviço</h1>
 
   <div class="toolbar">
-    <button id="btnNewOS" class="btn" type="button">+ Nova OS</button>
+    <button id="btnNewOS" class="btn" type="button" data-mode-only="pcm">+ Nova OS</button>
+    <button id="btnAcessarPcm" class="btn btn-secondary" type="button" data-mode-only="operador">🔒 Acessar PCM</button>
+    <button id="btnVoltarOperador" class="btn btn-secondary" type="button" data-mode-only="pcm">🔓 Voltar para Operador</button>
     <button id="btnThemeToggle" class="btn btn-secondary theme-toggle" type="button" aria-pressed="false">🌙 Tema escuro</button>
     <input id="backupFileInput" type="file" accept=".json,application/json" hidden>
     <input id="searchInput" class="search" type="search" placeholder="Buscar na aba atual...">
@@ -43,8 +48,8 @@
     <button class="tab is-active" data-tab="abertas" type="button">Abertas <span class="tab-badge is-hidden" data-count="abertas">0</span></button>
     <button class="tab" data-tab="andamento" type="button">Em andamento <span class="tab-badge is-hidden" data-count="andamento">0</span></button>
     <button class="tab" data-tab="finalizadas" type="button">Finalizadas <span class="tab-badge is-hidden" data-count="finalizadas">0</span></button>
-    <button class="tab" data-tab="cadastros" type="button">Cadastros</button>
-    <button class="tab" data-tab="relatorios" type="button">Relatórios</button>
+    <button class="tab" data-tab="cadastros" type="button" data-mode-only="pcm">Cadastros</button>
+    <button class="tab" data-tab="relatorios" type="button" data-mode-only="pcm">Relatórios</button>
     <button class="tab" data-tab="kpis" type="button">KPIs</button>
   </div>
 
@@ -82,7 +87,7 @@
           <th>Tipo Manutenção</th>
           <th>Executores</th>
           <th>Especialidade</th>
-          <th>Solicitante</th>
+          <th data-mode-only="pcm">Solicitante</th>
           <th>Tempo</th>
           <th>Ações</th>
         </tr></thead>
@@ -106,7 +111,7 @@
           <th>Componente</th>
           <th>Causa Raiz</th>
           <th>O que foi feito</th>
-          <th>Executores</th>
+          <th data-mode-only="pcm">Executores</th>
           <th>Especialidade</th>
           <th>Ações</th>
         </tr></thead>
@@ -116,7 +121,7 @@
     <div id="finalizadasPagination" style="display:flex;justify-content:center;align-items:center;gap:10px;margin-top:14px;flex-wrap:wrap;"></div>
   </section>
 
-  <section class="page" data-page="cadastros">
+  <section class="page" data-page="cadastros" data-mode-only="pcm">
     <div class="card cad-card">
       <div class="cad-header">
         <h2 class="cad-title">Cadastros</h2>
@@ -156,7 +161,7 @@
     </div>
   </section>
 
-  <section class="page" data-page="relatorios">
+  <section class="page" data-page="relatorios" data-mode-only="pcm">
     <div class="card cad-card">
       <div class="cad-header">
         <h2 class="cad-title">Relatórios</h2>
@@ -269,7 +274,7 @@
           <div id="chartKpiHH" class="kpi-chart-box" aria-label="Gráfico Homem Hora"></div>
         </div>
 
-        <div class="kpi-panel">
+        <div class="kpi-panel" data-mode-only="pcm">
           <div class="kpi-panel-head">
             <label>MTTR — Tempo Médio para Reparo</label>
             <span class="muted">Top 10 equipamento+local (O.S. corretivas finalizadas)</span>
@@ -277,7 +282,7 @@
           <div id="chartKpiMTTR" class="kpi-chart-box" aria-label="Gráfico MTTR"></div>
         </div>
 
-        <div class="kpi-panel">
+        <div class="kpi-panel" data-mode-only="pcm">
           <div class="kpi-panel-head">
             <label>MTBF — Tempo Médio Entre Falhas</label>
             <span class="muted">Top 10 equipamento+local (O.S. corretivas)</span>
@@ -285,7 +290,7 @@
           <div id="chartKpiMTBF" class="kpi-chart-box" aria-label="Gráfico MTBF"></div>
         </div>
 
-        <div class="kpi-panel">
+        <div class="kpi-panel" data-mode-only="pcm">
           <div class="kpi-panel-head">
             <label>Distribuição por Tipo de Manutenção</label>
             <span class="muted">% de O.S. por tipo</span>
@@ -293,7 +298,7 @@
           <div id="chartKpiTipo" class="kpi-chart-box" aria-label="Gráfico distribuição por tipo"></div>
         </div>
 
-        <div class="kpi-panel">
+        <div class="kpi-panel" data-mode-only="pcm">
           <div class="kpi-panel-head">
             <label>HH por Tipo de Manutenção</label>
             <span class="muted">Horas trabalhadas por tipo (O.S. finalizadas)</span>
@@ -322,6 +327,79 @@
   </section>
 </main>
 
+<div id="confirmBackdrop" class="modal-backdrop" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true">
+    <div class="modal-header"><div class="modal-title">Iniciar O.S.</div><button id="btnCloseConfirm" class="icon-btn" type="button">×</button></div>
+    <div class="modal-body">
+      <div id="confirmBody" class="summary-box"></div>
+      <div class="field" style="margin-top:14px">
+        <label for="fDataInicio">Data/Hora de início <span class="req">*</span></label>
+        <input id="fDataInicio" class="input" type="datetime-local" required>
+      </div>
+    </div>
+    <div class="modal-footer"><button id="btnCancelConfirm" class="btn btn-secondary" type="button">Cancelar</button><button id="btnConfirmStart" class="btn" type="button">Confirmar início</button></div>
+  </div>
+</div>
+
+<div id="closeBackdrop" class="modal-backdrop" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true">
+    <div class="modal-header"><div class="modal-title">Finalizar O.S.</div><button id="btnCloseClose" class="icon-btn" type="button">×</button></div>
+    <div class="modal-body">
+      <div id="closeResumo" class="summary-box"></div>
+
+      <!-- PASSO 1: Serviço concluído? -->
+      <div style="margin-bottom:16px; padding:14px; border:1px solid var(--panel-border); border-radius:12px; background:var(--surface-alt)">
+        <div style="font-weight:800; margin-bottom:12px; font-size:13px; text-transform:uppercase; letter-spacing:.5px">Serviço concluído? <span class="req">*</span></div>
+        <div style="display:flex; gap:12px; flex-wrap:wrap">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:700;padding:10px 16px;border-radius:10px;border:2px solid var(--field-border);flex:1;min-width:140px" id="labelConcluido">
+            <input type="radio" name="conclusao" id="rConcluido" value="sim" style="accent-color:#16a34a;width:18px;height:18px"> Sim
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:700;padding:10px 16px;border-radius:10px;border:2px solid var(--field-border);flex:1;min-width:140px" id="labelPendente">
+            <input type="radio" name="conclusao" id="rPendente" value="nao" style="accent-color:#f59e0b;width:18px;height:18px"> Não
+          </label>
+        </div>
+      </div>
+
+      <!-- CAMPOS DO FORMULÁRIO -->
+      <div style="display:flex; flex-direction:column; gap:12px;">
+        <div class="field">
+          <label for="fOQueFeito">O que foi feito <span class="req">*</span></label>
+          <textarea id="fOQueFeito" class="textarea" placeholder="Descreva as ações executadas neste turno"></textarea>
+        </div>
+        <div class="field" id="fOQueFaltaWrap" style="display:none">
+          <label for="fOQueFalta">O que falta / próximos passos <span class="req">*</span></label>
+          <textarea id="fOQueFalta" class="textarea" placeholder="Descreva o que ainda precisa ser feito no próximo turno"></textarea>
+        </div>
+        <div class="field" id="causaRaizWrap">
+          <label for="fCausa">Causa raiz <span class="req">*</span></label>
+          <textarea id="fCausa" class="textarea" placeholder="Descreva a causa raiz"></textarea>
+        </div>
+        <div class="field">
+          <label for="fDataInicioFim">Data/Hora de início da execução <span class="req">*</span></label>
+          <input id="fDataInicioFim" class="input" type="datetime-local" required>
+        </div>
+        <div class="field">
+          <label for="fDataFim">Data/Hora de finalização <span class="req">*</span></label>
+          <input id="fDataFim" class="input" type="datetime-local" required>
+        </div>
+        <div class="field">
+          <label>Local</label>
+          <div class="dd" data-dd="local"></div>
+        </div>
+        <div class="field">
+          <label>Equipamento</label>
+          <div class="dd" data-dd="equipamento"></div>
+        </div>
+        <div class="field">
+          <label>Componente <span class="req">*</span></label>
+          <div class="dd" data-dd="componente"></div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer"><button id="btnCancelClose" class="btn btn-secondary" type="button">Cancelar</button><button id="btnEncerrar" class="btn" type="button">Encerrar</button></div>
+  </div>
+</div>
+
 <div id="modalBackdrop" class="modal-backdrop" aria-hidden="true">
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
     <div class="modal-header"><div id="modalTitle" class="modal-title">Nova Ordem de Serviço</div><button id="btnCloseModal" class="icon-btn" type="button">×</button></div>
@@ -347,12 +425,12 @@
             </select>
           </div>
           <div class="field">
-            <label for="fDataInicio">Data/Hora de início <span style="font-size:10px;color:var(--muted);font-weight:400">(deixe em branco para manter)</span></label>
-            <input id="fDataInicio" class="input" type="datetime-local">
+            <label for="fDataInicioModal">Data/Hora de início <span style="font-size:10px;color:var(--muted);font-weight:400">(deixe em branco para manter)</span></label>
+            <input id="fDataInicioModal" class="input" type="datetime-local">
           </div>
           <div class="field">
-            <label for="fDataFim">Data/Hora de fim <span style="font-size:10px;color:var(--muted);font-weight:400">(deixe em branco para manter)</span></label>
-            <input id="fDataFim" class="input" type="datetime-local">
+            <label for="fDataFimModal">Data/Hora de fim <span style="font-size:10px;color:var(--muted);font-weight:400">(deixe em branco para manter)</span></label>
+            <input id="fDataFimModal" class="input" type="datetime-local">
           </div>
         </div>
       </div>
@@ -360,12 +438,26 @@
         <div class="form-grid">
           <div class="field"><label for="fComponente">Componente</label><div class="dd" data-dd="componente"></div></div>
           <div class="field"><label for="fCausaRaiz">Causa raiz</label><input id="fCausaRaiz" class="input" type="text" placeholder="Informe a causa raiz"></div>
-          <div class="field" style="grid-column:1/-1"><label for="fOQueFeito">O que foi feito <span class="req">*</span></label><textarea id="fOQueFeito" class="textarea" placeholder="Descreva as ações executadas"></textarea></div>
-          <div class="field" style="grid-column:1/-1"><label for="fOQueFalta">O que falta / próximos passos <span style="font-size:11px;color:var(--muted);font-weight:400">(preencher se houver continuação)</span></label><textarea id="fOQueFalta" class="textarea" placeholder="Descreva o que ainda precisa ser feito, se aplicável"></textarea></div>
+          <div class="field" style="grid-column:1/-1"><label for="fOQueFeitoModal">O que foi feito <span class="req">*</span></label><textarea id="fOQueFeitoModal" class="textarea" placeholder="Descreva as ações executadas"></textarea></div>
+          <div class="field" style="grid-column:1/-1"><label for="fOQueFaltaModal">O que falta / próximos passos <span style="font-size:11px;color:var(--muted);font-weight:400">(preencher se houver continuação)</span></label><textarea id="fOQueFaltaModal" class="textarea" placeholder="Descreva o que ainda precisa ser feito, se aplicável"></textarea></div>
         </div>
       </div>
     </div>
     <div class="modal-footer"><button id="btnCancelModal" class="btn btn-secondary" type="button">Cancelar</button><button id="btnSaveOS" class="btn" type="button">Salvar</button></div>
+  </div>
+</div>
+
+<div id="pcmPasswordBackdrop" class="modal-backdrop" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true" style="width:min(420px,92vw)">
+    <div class="modal-header"><div class="modal-title">Acessar modo PCM</div><button id="btnClosePcmPassword" class="icon-btn" type="button">×</button></div>
+    <div class="modal-body">
+      <div class="field">
+        <label for="pcmPasswordInput">Senha</label>
+        <input id="pcmPasswordInput" class="input" type="password" placeholder="Digite a senha do PCM" autocomplete="off">
+      </div>
+      <div id="pcmPasswordError" style="display:none;color:#FF6B6B;margin-top:8px;font-size:12px;font-weight:700">Senha incorreta.</div>
+    </div>
+    <div class="modal-footer"><button id="btnCancelPcmPassword" class="btn btn-secondary" type="button">Cancelar</button><button id="btnConfirmPcmPassword" class="btn" type="button">Entrar</button></div>
   </div>
 </div>
 
@@ -374,8 +466,18 @@
 <script>
 /* ── Estado global da página ──
    lists: listas de seleção (local, equipamento, etc.)
-   ordens: todas as OS carregadas do banco */
-let lists, ordens = [];
+   ordens: todas as OS carregadas do banco
+   rowToStart / rowToClose: OS selecionada para iniciar ou finalizar (modo Operador)
+   editingOrderId / editingCadastroIndex: edição em andamento (modo PCM) */
+let lists, ordens = [], rowToStart = null, rowToClose = null;
+let editingOrderId = null;
+let editingCadastroIndex = -1;
+/* Listas inativas — itens desativados não aparecem nos dropdowns */
+let inactiveLists = { local:[], equipamento:[], componente:[], executores:[], tipo_manutencao:[], solicitante:[] };
+function isInactive(listKey, value){
+  const arr = inactiveLists[listKey] || [];
+  return arr.some(v => String(v).trim().toUpperCase() === String(value).trim().toUpperCase());
+}
 const tabs = document.querySelectorAll('.tab');
 const pages = document.querySelectorAll('.page');
 const searchInput = document.getElementById('searchInput');
@@ -403,10 +505,35 @@ const kpiEspecialidadeButtons = document.getElementById('kpiEspecialidadeButtons
 const kpiDateStart = document.getElementById('kpiDateStart');
 const kpiDateEnd = document.getElementById('kpiDateEnd');
 const kpiState = { local: null, equipamento: null, text: '', tipo: null, especialidade: null, dateStart: '', dateEnd: '' };
+const confirmBackdrop = document.getElementById('confirmBackdrop');
+const closeBackdrop = document.getElementById('closeBackdrop');
 const modalBackdrop = document.getElementById('modalBackdrop');
+const pcmPasswordBackdrop = document.getElementById('pcmPasswordBackdrop');
+const pcmPasswordInput = document.getElementById('pcmPasswordInput');
+const pcmPasswordError = document.getElementById('pcmPasswordError');
 const tooltip = document.getElementById('tooltip');
 let currentRow = null;
-/* Chave usada no localStorage para guardar a preferência de tema do usuário */
+const cadTypeSelect = document.getElementById('cadTypeSelect');
+const cadValueInput = document.getElementById('cadValueInput');
+const cadSummary = document.getElementById('cadSummary');
+const cadSearchInput = document.getElementById('cadSearchInput');
+const cadSearchResults = document.getElementById('cadSearchResults');
+const cadEspecialidadeField = document.getElementById('cadEspecialidadeField');
+const cadEspecialidadeSelect = document.getElementById('cadEspecialidadeSelect');
+const reportTypeSelect = document.getElementById('reportTypeSelect');
+const reportStartDateInput = document.getElementById('reportStartDateInput');
+const reportEndDateInput = document.getElementById('reportEndDateInput');
+const reportFormatSelect = document.getElementById('reportFormatSelect');
+
+/* ── Modo Operador / PCM ── */
+function isPcmMode(){ return document.documentElement.getAttribute('data-mode') === 'pcm'; }
+function setMode(mode){
+  document.documentElement.setAttribute('data-mode', mode);
+  try { sessionStorage.setItem('pcm_mode', mode); } catch(_) {}
+  document.title = mode === 'pcm' ? 'PCM - Ordens de Serviço' : 'Operador - Ordens de Serviço';
+}
+
+/* ── Tema claro/escuro ── */
 const THEME_STORAGE_KEY = 'pcm_theme';
 function readStoredTheme(){
   try { const s = localStorage.getItem(THEME_STORAGE_KEY); return s === 'light' ? 'light' : 'dark'; }
@@ -433,64 +560,29 @@ window.addEventListener('storage', (event)=>{
   if(event.key === THEME_STORAGE_KEY) applyTheme(event.newValue === 'dark' ? 'dark' : 'light');
 });
 
-let editingOrderId = null;
-let editingCadastroIndex = -1;
-
-/* Listas inativas carregadas do banco — itens inativos não aparecem nos dropdowns */
-let inactiveLists = { local:[], equipamento:[], componente:[], executores:[], tipo_manutencao:[], solicitante:[] };
-
-/* Verifica se um valor está inativo em uma lista */
-function isInactive(listKey, value){
-  const arr = inactiveLists[listKey] || [];
-  return arr.some(v => String(v).trim().toUpperCase() === String(value).trim().toUpperCase());
-}
-
-const cadConfig = {
-  local: { listKey:'local', label:'Local' },
-  equipamento: { listKey:'equipamento', label:'Equipamento' },
-  componente: { listKey:'componente', label:'Componente' },
-  operador: { listKey:'executores', label:'Operador' },
-  especialidade: { listKey:'especialidade', label:'Especialidade' }
-};
-const cadEspecialidadeField = document.getElementById('cadEspecialidadeField');
-const cadEspecialidadeSelect = document.getElementById('cadEspecialidadeSelect');
 /* Retorna a especialidade cadastrada para um operador (nome já normalizado) */
 function especialidadeDoOperador(nome){
   return (lists?.operador_especialidade || {})[nome] || '';
 }
-/* Retorna as especialidades (sem repetir) dos executores de uma O.S., juntas com " / " */
+/* Especialidades (sem repetir) dos executores de uma O.S. */
+function especialidadesDaOrdem(order){
+  const nomes = Array.isArray(order.executores) ? order.executores : splitMultiValue(order.executores);
+  return [...new Set(nomes.map(especialidadeDoOperador).filter(Boolean))];
+}
+/* Especialidades (sem repetir) dos executores, juntas com " / " — usada nas tabelas */
 function especialidadesFor(executores){
   const nomes = Array.isArray(executores) ? executores : splitMultiValue(executores);
   const especialidades = [...new Set(nomes.map(especialidadeDoOperador).filter(Boolean))];
   return especialidades.length ? especialidades.join(' / ') : '-';
 }
 
-const cadTypeSelect = document.getElementById('cadTypeSelect');
-const cadValueInput = document.getElementById('cadValueInput');
-const cadSummary = document.getElementById('cadSummary');
-const cadSearchInput = document.getElementById('cadSearchInput');
-const cadSearchResults = document.getElementById('cadSearchResults');
-const reportTypeSelect = document.getElementById('reportTypeSelect');
-const reportStartDateInput = document.getElementById('reportStartDateInput');
-const reportEndDateInput = document.getElementById('reportEndDateInput');
-const reportFormatSelect = document.getElementById('reportFormatSelect');
-
-const ddState = {
-  prioridade:{multiple:false, value:null, search:''},
-  local:{multiple:true, value:[], search:''},
-  equipamento:{multiple:true, value:[], search:''},
-  tipo:{multiple:false, value:null, search:''},
-  executores:{multiple:true, value:[], search:''},
-  componente:{multiple:true, value:[], search:''}
-};
-
 function activePage(){ return document.querySelector('.page.is-visible'); }
-/* Troca a aba visível e reaplica o filtro de busca */
+/* Troca a aba visível e reaplica o filtro de busca na nova aba */
 function showPage(key){
   tabs.forEach(t=>t.classList.toggle('is-active',t.dataset.tab===key));
   pages.forEach(p=>p.classList.toggle('is-visible',p.dataset.page===key));
   searchInput.placeholder = key==='cadastros' ? 'Busca disponível nas abas de ordens...' : 'Buscar na aba atual...';
-  if(key==='kpis') setTimeout(renderKpis, 50);
+  if(key==='kpis') setTimeout(renderKpis,50);
   applyFilter();
 }
 /* Filtra as linhas da tabela ativa com base no texto digitado na busca */
@@ -499,17 +591,18 @@ function applyFilter(){
   const page=activePage();
   if(!page) return;
   if(page.dataset.page==='cadastros') return;
-  // Para finalizadas, re-renderizar com filtro aplicado na paginação
-  if(page.dataset.page==='finalizadas'){
-    renderFinalizadasFiltradas(q);
-    return;
-  }
+  if(page.dataset.page==='finalizadas'){ renderFinalizadasFiltradas(q); return; }
   page.querySelectorAll('tbody tr').forEach(tr=>{
     const text=((tr.textContent||'')+' '+(tr.dataset.obs||'')).toLowerCase();
     tr.style.display=text.includes(q)?'table-row':'none';
   });
 }
 
+/* Quantidade de OS finalizadas exibidas por página na tabela */
+const FINALIZADAS_PER_PAGE = 30;
+let finalizadasPage = 0;
+
+/* Calcula a duração entre início e fim de uma OS no formato "XhYYm". Retorna "-" se inválido. */
 function duracaoHHMM(inicio, fim){
   if(!inicio || !fim) return '-';
   const s = PCMUtils.parseBR(inicio), e = PCMUtils.parseBR(fim);
@@ -519,45 +612,29 @@ function duracaoHHMM(inicio, fim){
   return `${hh}h${String(mm).padStart(2,'0')}m`;
 }
 
-
-/* Gera a paginação estilo "‹ 1 2 ... 5 6 7 ... 172 173 ›"
-   Mostra sempre: primeira, última, atual e 2 vizinhas de cada lado.
-   Reticências aparecem quando há gap entre os grupos. */
+/* Gera a paginação estilo "‹ 1 2 ... 5 6 7 ... 172 173 ›" */
 function buildPagination(current, total, q, filteredLen, paginationEl, onPageClick){
   if(!paginationEl) return;
   if(total <= 1){ paginationEl.innerHTML = ''; return; }
-
-  /* Decide quais páginas mostrar */
   const show = new Set();
   show.add(0);
   show.add(total - 1);
   for(let i = Math.max(0, current - 2); i <= Math.min(total - 1, current + 2); i++) show.add(i);
   const pages = [...show].sort((a,b) => a - b);
-
   const btnBase = 'style="padding:6px 10px;font-size:13px;min-width:36px;border-radius:6px;border:1.5px solid var(--field-border);background:var(--surface-alt);color:var(--text);cursor:pointer;font-family:Poppins,sans-serif;font-weight:600"';
   const btnActive = 'style="padding:6px 10px;font-size:13px;min-width:36px;border-radius:6px;border:1.5px solid var(--mid);background:var(--mid);color:#fff;cursor:pointer;font-family:Poppins,sans-serif;font-weight:700"';
   const btnNav = 'style="padding:6px 10px;font-size:13px;min-width:36px;border-radius:6px;border:1.5px solid var(--field-border);background:var(--surface-alt);color:var(--text);cursor:pointer;font-family:Poppins,sans-serif;font-weight:700"';
   const dots = '<span style="padding:6px 4px;color:var(--muted);font-size:13px">…</span>';
-
   let html = '<div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;justify-content:center">';
-
-  /* Total de registros */
   html += `<span style="font-size:12px;color:var(--muted);margin-right:8px">Total: ${filteredLen}${q?' (filtrados)':''}</span>`;
-
-  /* Botão anterior */
   html += `<button ${current === 0 ? 'disabled ' : ''}${btnNav} data-fin-page="${current - 1}">‹</button>`;
-
-  /* Páginas com reticências */
   let prev = -1;
   for(const p of pages){
     if(prev !== -1 && p - prev > 1) html += dots;
     html += `<button ${p === current ? btnActive : btnBase} data-fin-page="${p}">${p + 1}</button>`;
     prev = p;
   }
-
-  /* Botão próximo */
   html += `<button ${current === total - 1 ? 'disabled ' : ''}${btnNav} data-fin-page="${current + 1}">›</button>`;
-
   html += '</div>';
   paginationEl.innerHTML = html;
   paginationEl.querySelectorAll('[data-fin-page]').forEach(btn => {
@@ -566,67 +643,26 @@ function buildPagination(current, total, q, filteredLen, paginationEl, onPageCli
   });
 }
 
-function renderFinalizadasFiltradas(q){
-  const finalizadas = ordens.filter(o=>o.status==='FINALIZADA');
-  const filtradas = q ? finalizadas.filter(o=>{
-    const texto = [o.data_fim,o.prioridade,String(o.id_os),o.local,o.equipamento,o.componente,o.causa_raiz,o.o_que_feito,o.observacao_fechamento,(o.executores||[]).join(' ')].join(' ').toLowerCase();
-    return texto.includes(q);
-  }) : finalizadas;
-
-  const totalPages = Math.max(1, Math.ceil(filtradas.length / FINALIZADAS_PER_PAGE));
-  if(finalizadasPage >= totalPages) finalizadasPage = 0;
-  const pageSlice = filtradas.slice(finalizadasPage * FINALIZADAS_PER_PAGE, (finalizadasPage + 1) * FINALIZADAS_PER_PAGE);
-  const acoes = o => `<div class="action-group"><button class="btn-icon" type="button" data-os-print="${o.id_os}" title="Imprimir O.S.">🖨️</button><button class="btn-icon btn-icon-edit" type="button" data-os-edit="${o.id_os}" title="Editar O.S.">✏️</button><button class="btn-icon btn-icon-delete" type="button" data-os-delete="${o.id_os}" title="Excluir O.S.">🗑️</button></div>`;
-
-  tbodyFinalizadas.innerHTML = pageSlice.length ? pageSlice.map(o=>`
-    <tr data-id="${o.id_os}" data-obs="${PCMDB.escapeHtml(o.o_que_feito || o.observacao_fechamento || '')}">
-      <td><span class="badge finalizada">FINALIZADA</span></td>
-      <td style="white-space:nowrap">${PCMDB.escapeHtml(o.data_fim || '-')}</td>
-      <td style="white-space:nowrap;color:var(--muted);font-size:12px">${duracaoHHMM(o.data_inicio, o.data_fim)}</td>
-      <td><span class="pill ${PCMDB.priorityClass(o.prioridade)}">${PCMDB.escapeHtml(o.prioridade)}</span></td>
-      <td>${o.id_os}</td>
-      <td>${PCMDB.escapeHtml(o.local)}</td>
-      <td>${PCMDB.escapeHtml(o.equipamento)}</td>
-      <td style="white-space:nowrap;font-size:12px">${PCMDB.escapeHtml(o.tipo_manutencao || '-')}</td>
-      <td>${PCMDB.escapeHtml(o.componente || '-')}</td>
-      <td class="cell-wrap"><span class="wrap-inner">${PCMDB.escapeHtml(o.causa_raiz || '-')}</span></td>
-      <td class="cell-wrap"><span class="wrap-inner">${PCMDB.escapeHtml(o.o_que_feito || o.observacao_fechamento || '-')}</span></td>
-      <td>${PCMDB.escapeHtml((o.executores||[]).join(' / '))}</td>
-      <td>${PCMDB.escapeHtml(especialidadesFor(o.executores))}</td>
-      <td>${acoes(o)}</td>
-    </tr>`).join('') : `<tr><td colspan="14" class="empty">Nenhuma O.S. encontrada.</td></tr>`;
-
-  const pagination = document.getElementById('finalizadasPagination');
-  buildPagination(finalizadasPage, totalPages, q, filtradas.length, pagination, (p)=>{ finalizadasPage=p; renderFinalizadasFiltradas(q); });
-}
-
-function closeModal(){
-  modalBackdrop.classList.remove('is-open');
-  editingOrderId = null;
-  document.getElementById('modalTitle').textContent='Nova Ordem de Serviço';
-  document.getElementById('btnSaveOS').textContent='Salvar';
-  document.getElementById('fObs').value='';
-  document.getElementById('fSolicitante').value='';
-  document.getElementById('fCausaRaiz').value='';
-  document.getElementById('fOQueFeito').value='';
-  document.getElementById('fOQueFalta').value='';
-  document.getElementById('fDataAbertura').value='';
-  document.getElementById('fDataInicio').value='';
-  document.getElementById('fDataFim').value='';
-  document.getElementById('editFinalFields').style.display='none';
-  document.getElementById('editStatusRow').style.display='none';
-  document.getElementById('fStatus').value='ABERTA';
-  resetDropdowns(); renderAllDropdowns(); closeAllDropdowns();
-  if(window._pollController) window._pollController.resume();
-}
-function openModal(){
-  modalBackdrop.classList.add('is-open');
-  closeAllDropdowns();
-  if(window._pollController) window._pollController.pause();
-}
-
+/* ── Dropdowns (compartilhado entre modal Finalizar, modal Nova/Editar OS e Cadastros) ── */
+const ddState = {
+  prioridade:{multiple:false, value:null, search:''},
+  local:{multiple:true, value:[], search:''},
+  equipamento:{multiple:true, value:[], search:''},
+  tipo:{multiple:false, value:null, search:''},
+  executores:{multiple:true, value:[], search:''},
+  componente:{multiple:true, value:[], search:''}
+};
 function resetDropdowns(){ Object.keys(ddState).forEach(k=>{ ddState[k].search=''; ddState[k].value = ddState[k].multiple ? [] : null; }); }
 function sortAlpha(items){ return [...(items || [])].sort((a,b)=>String(a).localeCompare(String(b),'pt-BR',{sensitivity:'base',numeric:true})); }
+/* Transforma um valor múltiplo (array ou string "A / B") em array limpo */
+function splitMultiValue(value){
+  if(Array.isArray(value)) return value.map(v=>String(v||'').trim()).filter(Boolean);
+  return String(value || '').split(/\s*\/\s*/).map(v=>v.trim()).filter(Boolean);
+}
+/* Transforma um array de valores em string separada por " / " para salvar no banco */
+function joinMultiValue(values){
+  return (Array.isArray(values) ? values : []).map(v=>String(v||'').trim()).filter(Boolean).join(' / ');
+}
 /* Retorna a lista filtrada — remove itens inativos dos dropdowns de seleção */
 function listFor(key){
   let raw;
@@ -647,19 +683,12 @@ function listForAll(key){
   return sortAlpha(lists[key] || []);
 }
 function selectedLabel(key){ const s = ddState[key]; if(s.multiple) return s.value; return s.value ? [s.value] : []; }
-/* Transforma um valor múltiplo (array ou string "A / B") em array limpo */
-function splitMultiValue(value){
-  if(Array.isArray(value)) return value.map(v=>String(v||'').trim()).filter(Boolean);
-  return String(value || '').split(/\s*\/\s*/).map(v=>v.trim()).filter(Boolean);
-}
-/* Transforma um array de valores em string separada por " / " para salvar no banco */
-function joinMultiValue(values){
-  return (Array.isArray(values) ? values : []).map(v=>String(v||'').trim()).filter(Boolean).join(' / ');
-}
-/* Reconstrói o HTML de um dropdown a partir do estado atual.
-   Chamado sempre que uma seleção muda ou o texto de busca é alterado. */
+/* Reconstrói o HTML de um dropdown a partir do estado atual. */
 function renderDropdown(key){
-  const host = document.querySelector(`.dd[data-dd="${key}"]`); const cfg = ddState[key]; const options = listFor(key).filter(v=>String(v).toLowerCase().includes((cfg.search||'').toLowerCase()));
+  const host = document.querySelector(`.dd[data-dd="${key}"]`);
+  if(!host) return;
+  const cfg = ddState[key];
+  const options = listFor(key).filter(v=>String(v).toLowerCase().includes((cfg.search||'').toLowerCase()));
   const chosen = selectedLabel(key);
   host.innerHTML = `
     <div class="dd-box ${host.dataset.open==='1'?'is-open':''}" data-dd-box="${key}">
@@ -675,8 +704,18 @@ function renderDropdown(key){
 function renderAllDropdowns(){ Object.keys(ddState).forEach(renderDropdown); }
 function closeAllDropdowns(){ document.querySelectorAll('.dd').forEach(el=>{el.dataset.open='0';}); renderAllDropdowns(); }
 
+function askConfirmation(message){ return window.confirm(message); }
+
+/* ── Cadastros (modo PCM) ── */
+const cadConfig = {
+  local: { listKey:'local', label:'Local' },
+  equipamento: { listKey:'equipamento', label:'Equipamento' },
+  componente: { listKey:'componente', label:'Componente' },
+  operador: { listKey:'executores', label:'Operador' },
+  especialidade: { listKey:'especialidade', label:'Especialidade' }
+};
 function toUpperPreserve(value){ return String(value || '').toUpperCase(); }
-function sanitizeCadastroValue(value){ return toUpperPreserve(value).normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^A-Z0-9\s]/g,' ').replace(/\s+/g,' ').trim(); }
+function sanitizeCadastroValue(value){ return toUpperPreserve(value).normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^A-Z0-9\s]/g,' ').replace(/\s+/g,' ').trim(); }
 function normalizeValue(value){ return toUpperPreserve(String(value || '').trim().replace(/\s+/g,' ')); }
 function sortUnique(items){ return [...new Set(items.map(normalizeValue).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR',{sensitivity:'base'})); }
 function getCadListKey(key){ return cadConfig[key].listKey; }
@@ -696,9 +735,7 @@ function renderCadastros(){
     <div class="cad-helper">Para manter a tela leve, o sistema mostra apenas uma amostra do cadastro.</div>
     ${exemplos ? `<div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:8px">${exemplos}</div>` : '<div class="cad-helper" style="margin-top:8px">Nenhum item cadastrado ainda.</div>'}
   `;
-  const artigo = cfg.label === 'Operador' ? 'o' : 'o';
-  cadValueInput.placeholder = `Digite ${artigo} ${cfg.label.toLowerCase()} para cadastrar`;
-  /* Campo de especialidade só aparece ao cadastrar Operador */
+  cadValueInput.placeholder = `Digite o ${cfg.label.toLowerCase()} para cadastrar`;
   if(cadEspecialidadeField){
     const isOperador = key === 'operador';
     cadEspecialidadeField.style.display = isOperador ? 'block' : 'none';
@@ -760,82 +797,41 @@ async function updateCadastroValue(){
   if(duplicateIndex >= 0){ alert('Já existe um item com esse nome.'); return; }
   const oldValue = currentList[editingCadastroIndex];
   if(!askConfirmation(`Tem certeza que deseja salvar a edição de ${cfg.label.toLowerCase()}?`)) return;
-  currentList[editingCadastroIndex] = newValue;
-  lists[listKey] = sortUnique(currentList);
-  if(isOperador){
-    const mapa = { ...(lists.operador_especialidade || {}) };
-    delete mapa[oldValue];
-    mapa[newValue] = newEspecialidade;
-    lists.operador_especialidade = mapa;
-  }
-  await PCMDB.setLists(lists);
-  lists = await PCMDB.getLists();
-  if(listKey === 'local' || listKey === 'equipamento' || listKey === 'executores' || listKey === 'componente'){
-    const rows = await PCMDB.getAllOrders();
-    for(const ordem of rows){
-      let changed = false;
-      if(listKey === 'local' && normalizeValue(ordem.local).localeCompare(normalizeValue(oldValue),'pt-BR',{sensitivity:'base'})===0){ ordem.local = newValue; changed = true; }
-      if(listKey === 'equipamento' && normalizeValue(ordem.equipamento).localeCompare(normalizeValue(oldValue),'pt-BR',{sensitivity:'base'})===0){ ordem.equipamento = newValue; changed = true; }
-      if(listKey === 'componente' && normalizeValue(ordem.componente).localeCompare(normalizeValue(oldValue),'pt-BR',{sensitivity:'base'})===0){ ordem.componente = newValue; changed = true; }
-      if(listKey === 'executores' && Array.isArray(ordem.executores)){
-        const updatedExecutores = ordem.executores.map(v => normalizeValue(v).localeCompare(normalizeValue(oldValue),'pt-BR',{sensitivity:'base'})===0 ? newValue : v);
-        if(JSON.stringify(updatedExecutores) !== JSON.stringify(ordem.executores)){ ordem.executores = updatedExecutores; changed = true; }
-      }
-      if(changed) await PCMDB.updateOrder(ordem, true);
+  try {
+    currentList[editingCadastroIndex] = newValue;
+    lists[listKey] = sortUnique(currentList);
+    if(isOperador){
+      const mapa = { ...(lists.operador_especialidade || {}) };
+      delete mapa[oldValue];
+      mapa[newValue] = newEspecialidade;
+      lists.operador_especialidade = mapa;
     }
-    PCMDB.notifyChange?.();
-  }
-  editingCadastroIndex = -1;
-  document.getElementById('cadEditBox').style.display = 'none';
-  renderAllDropdowns();
-  renderCadastros();
-  renderCadastroSearchResults();
-  await loadAndRender();
+    await PCMDB.setLists(lists);
+    lists = await PCMDB.getLists();
+    if(listKey === 'local' || listKey === 'equipamento' || listKey === 'executores' || listKey === 'componente'){
+      const rows = await PCMDB.getAllOrders();
+      for(const ordem of rows){
+        let changed = false;
+        if(listKey === 'local' && normalizeValue(ordem.local).localeCompare(normalizeValue(oldValue),'pt-BR',{sensitivity:'base'})===0){ ordem.local = newValue; changed = true; }
+        if(listKey === 'equipamento' && normalizeValue(ordem.equipamento).localeCompare(normalizeValue(oldValue),'pt-BR',{sensitivity:'base'})===0){ ordem.equipamento = newValue; changed = true; }
+        if(listKey === 'componente' && normalizeValue(ordem.componente).localeCompare(normalizeValue(oldValue),'pt-BR',{sensitivity:'base'})===0){ ordem.componente = newValue; changed = true; }
+        if(listKey === 'executores' && Array.isArray(ordem.executores)){
+          const updatedExecutores = ordem.executores.map(v => normalizeValue(v).localeCompare(normalizeValue(oldValue),'pt-BR',{sensitivity:'base'})===0 ? newValue : v);
+          if(JSON.stringify(updatedExecutores) !== JSON.stringify(ordem.executores)){ ordem.executores = updatedExecutores; changed = true; }
+        }
+        if(changed) await PCMDB.updateOrder(ordem, true);
+      }
+      PCMDB.notifyChange?.();
+    }
+    editingCadastroIndex = -1;
+    document.getElementById('cadEditBox').style.display = 'none';
+    renderAllDropdowns();
+    renderCadastros();
+    renderCadastroSearchResults();
+    await loadAndRender();
+  } catch(err){ console.error(err); alert('Erro ao salvar a edição do cadastro: ' + (err?.message || err)); }
 }
 function cancelCadastroEdit(){ editingCadastroIndex = -1; document.getElementById('cadEditBox').style.display='none'; document.getElementById('cadEditBox').innerHTML=''; }
-function brToDatetimeLocal(brStr){
-  // "DD/MM/YYYY HH:MM" → "YYYY-MM-DDTHH:MM"
-  if(!brStr) return '';
-  const m = String(brStr).match(/(\d{2})\/(\d{2})\/(\d{4})(?:\s+(\d{2}):(\d{2}))?/);
-  if(!m) return '';
-  const [,dd,mm,yyyy,hh='00',min='00'] = m;
-  return `${yyyy}-${mm}-${dd}T${hh}:${min}`;
-}
-function openEditOrder(id){
-  const ordem = ordens.find(o => String(o.id_os) === String(id));
-  if(!ordem) return;
-  editingOrderId = ordem.id_os;
-  document.getElementById('modalTitle').textContent = `Editar O.S. ${ordem.id_os}`;
-  document.getElementById('btnSaveOS').textContent = 'Salvar edição';
-  ddState.prioridade.value = ordem.prioridade || null;
-  ddState.local.value = splitMultiValue(ordem.local);
-  ddState.equipamento.value = splitMultiValue(ordem.equipamento);
-  ddState.tipo.value = ordem.tipo_manutencao || null;
-  ddState.executores.value = Array.isArray(ordem.executores) ? [...ordem.executores] : [];
-  ddState.componente.value = splitMultiValue(ordem.componente);
-  document.getElementById('fSolicitante').value = ordem.solicitante || '';
-  document.getElementById('fObs').value = ordem.observacao_abertura || '';
-  document.getElementById('fCausaRaiz').value = ordem.causa_raiz || '';
-  document.getElementById('fOQueFeito').value = ordem.o_que_feito || ordem.observacao_fechamento || '';
-  document.getElementById('fOQueFalta').value = ordem.o_que_falta || '';
-  // Status e datas
-  const fStatus = document.getElementById('fStatus');
-  fStatus.value = ordem.status || 'ABERTA';
-  document.getElementById('fDataInicio').value = brToDatetimeLocal(ordem.data_inicio);
-  document.getElementById('fDataFim').value = brToDatetimeLocal(ordem.data_fim);
-  document.getElementById('editStatusRow').style.display = 'block';
-  document.getElementById('editFinalFields').style.display = (fStatus.value === 'FINALIZADA') ? 'block' : 'none';
-  renderAllDropdowns();
-  openModal();
-}
-
-document.getElementById('fStatus').addEventListener('change', function(){
-  document.getElementById('editFinalFields').style.display = this.value === 'FINALIZADA' ? 'block' : 'none';
-});
-
-
-function askConfirmation(message){ return window.confirm(message); }
-
 async function saveListValue(key, rawValue){
   const value = sanitizeCadastroValue(rawValue);
   cadValueInput.value = value;
@@ -849,203 +845,23 @@ async function saveListValue(key, rawValue){
   const isOperador = key === 'operador';
   const especialidadeEscolhida = isOperador ? (cadEspecialidadeSelect.value || '') : '';
   if(isOperador && !especialidadeEscolhida){ alert('Selecione a especialidade do operador.'); return; }
-  lists[listKey] = sortUnique([...current, value]);
-  if(isOperador){
-    lists.operador_especialidade = { ...(lists.operador_especialidade || {}), [value]: especialidadeEscolhida };
-  }
-  await PCMDB.setLists(lists);
-  lists = await PCMDB.getLists();
-  renderAllDropdowns();
-  renderCadastros();
-  cadValueInput.value='';
-  renderCadastroSearchResults();
-}
-
-document.addEventListener('click', async (e)=>{
-  const box = e.target.closest('[data-dd-box]');
-  const item = e.target.closest('[data-dd-item]');
-  const remove = e.target.closest('[data-dd-remove]');
-  const cadSave = e.target.closest('#btnCadSave');
-  const cadEdit = e.target.closest('[data-cad-edit]');
-  const cadToggle = e.target.closest('[data-cad-toggle]');
-  const cadUpdate = e.target.closest('#btnCadUpdate');
-  const cadCancelEdit = e.target.closest('#btnCadCancelEdit');
-  const osEdit = e.target.closest('[data-os-edit]');
-  const osDelete = e.target.closest('[data-os-delete]');
-  const osPrint = e.target.closest('[data-os-print]');
-  if(cadSave){ saveListValue(cadTypeSelect.value, cadValueInput.value); return; }
-  if(cadToggle){
-    const key = cadTypeSelect.value;
-    const cfg = cadConfig[key];
-    const value = cadToggle.dataset.cadToggle;
-    const willDeactivate = !isInactive(cfg.listKey, value);
-    const msg = willDeactivate
-      ? `Desativar "${value}"?\n\nO item não aparecerá mais nas caixas de seleção, mas o histórico de O.S. será preservado.`
-      : `Reativar "${value}"?\n\nO item voltará a aparecer nas caixas de seleção.`;
-    if(!askConfirmation(msg)) return;
-    inactiveLists = await PCMDB.toggleInactiveItem(cfg.listKey, value);
+  try {
+    lists[listKey] = sortUnique([...current, value]);
+    if(isOperador){
+      lists.operador_especialidade = { ...(lists.operador_especialidade || {}), [value]: especialidadeEscolhida };
+    }
+    await PCMDB.setLists(lists);
+    lists = await PCMDB.getLists();
     renderAllDropdowns();
     renderCadastros();
+    cadValueInput.value='';
     renderCadastroSearchResults();
-    return;
-  }
-  if(cadEdit){ startCadastroEdit(cadEdit.dataset.cadEdit); return; }
-  if(cadUpdate){ updateCadastroValue(); return; }
-  if(cadCancelEdit){ cancelCadastroEdit(); return; }
-  if(osEdit){
-    const id = osEdit.dataset.osEdit;
-    const ordem = ordens.find(o => String(o.id_os) === String(id));
-    if(!ordem) return;
-    if(!askConfirmation(`Deseja editar a O.S. ${ordem.id_os} — ${ordem.equipamento}?`)) return;
-    openEditOrder(id);
-    return;
-  }
-  if(osDelete){
-    const id = osDelete.dataset.osDelete;
-    const ordem = ordens.find(o => String(o.id_os) === String(id));
-    if(!ordem) return;
-    if(!askConfirmation(`Tem certeza que deseja EXCLUIR permanentemente a O.S. ${ordem.id_os} (${ordem.equipamento})?\n\nEsta ação não pode ser desfeita.`)) return;
-    await PCMDB.deleteOrder(id);
-    await loadAndRender();
-    return;
-  }
-  if(osPrint){
-    const id = osPrint.dataset.osPrint;
-    const ordem = ordens.find(o => String(o.id_os) === String(id));
-    if(!ordem) return;
-    printOrder(ordem);
-    return;
-  }
-  if(remove){ const key=remove.dataset.ddRemove; ddState[key].value = ddState[key].value.filter(v=>v!==remove.dataset.value); renderDropdown(key); return; }
-  if(item){ const key=item.dataset.ddItem, value=item.dataset.value, cfg=ddState[key]; if(cfg.multiple){ cfg.value = cfg.value.includes(value) ? cfg.value.filter(v=>v!==value) : [...cfg.value, value]; } else { cfg.value=value; document.querySelector(`.dd[data-dd="${key}"]`).dataset.open='0'; } renderDropdown(key); return; }
-  if(box){ const key=box.dataset.ddBox; document.querySelectorAll('.dd').forEach(el=>{ if(el!==box.parentElement) el.dataset.open='0'; }); box.parentElement.dataset.open = box.parentElement.dataset.open==='1'?'0':'1'; renderAllDropdowns(); return; }
-  if(!e.target.closest('.dd')) closeAllDropdowns();
-});
-document.addEventListener('input', (e)=>{
-  if(e.target.matches('[data-dd-search]')){
-    const key=e.target.dataset.ddSearch;
-    const start=typeof e.target.selectionStart==='number'?e.target.selectionStart:null;
-    const end=typeof e.target.selectionEnd==='number'?e.target.selectionEnd:start;
-    ddState[key].search=e.target.value;
-    renderDropdown(key);
-    const searchEl=document.querySelector(`.dd[data-dd="${key}"] .dd-search`);
-    if(searchEl){
-      searchEl.focus();
-      if(start!==null){
-        const max=searchEl.value.length;
-        searchEl.setSelectionRange(Math.min(start,max), Math.min(end ?? start,max));
-      }
-    }
-    return;
-  }
-  if(e.target===searchInput){ finalizadasPage = 0; applyFilter(); }
-  if(e.target===cadSearchInput) renderCadastroSearchResults();
-});
-document.addEventListener('keydown', async (e)=>{
-  if(e.key==='Escape'){ closeModal(); closeAllDropdowns(); }
-  if(e.key==='Enter' && e.target===cadValueInput){
-    e.preventDefault();
-    await saveListValue(cadTypeSelect.value, cadValueInput.value);
-  }
-});
-
-document.getElementById('btnThemeToggle').addEventListener('click', toggleTheme);
-tabs.forEach(btn=>btn.addEventListener('click', ()=>showPage(btn.dataset.tab)));
-cadTypeSelect.addEventListener('change', ()=>{ cadSearchInput.value=''; cancelCadastroEdit(); renderCadastros(); renderCadastroSearchResults(); });
-document.getElementById('btnNewOS').addEventListener('click', openModal);
-document.getElementById('btnCloseModal').addEventListener('click', closeModal);
-document.getElementById('btnCancelModal').addEventListener('click', closeModal);
-modalBackdrop.addEventListener('click', e=>{ if(e.target===modalBackdrop) closeModal(); });
-
-document.getElementById('btnSaveOS').addEventListener('click', async ()=>{
-  const dataAberturaInput = document.getElementById('fDataAbertura').value;
-  let dataAbertura = '';
-  if(dataAberturaInput){
-    const d = new Date(dataAberturaInput);
-    const pad2 = n => String(n).padStart(2,'0');
-    dataAbertura = `${pad2(d.getDate())}/${pad2(d.getMonth()+1)}/${d.getFullYear()} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
-  }
-  const payload = {
-    prioridade: ddState.prioridade.value,
-    local: joinMultiValue(ddState.local.value),
-    equipamento: joinMultiValue(ddState.equipamento.value),
-    tipo_manutencao: ddState.tipo.value,
-    executores: ddState.executores.value,
-    solicitante: document.getElementById('fSolicitante').value.trim(),
-    observacao_abertura: document.getElementById('fObs').value.trim(),
-    componente: joinMultiValue(ddState.componente.value),
-    causa_raiz: document.getElementById('fCausaRaiz').value.trim(),
-    o_que_feito: document.getElementById('fOQueFeito').value.trim(),
-    o_que_falta: document.getElementById('fOQueFalta').value.trim(),
-    data_abertura: dataAbertura
-  };
-  // Converter datetime-local → formato BR para data_inicio e data_fim
-  function dtLocalToBR(val){
-    if(!val) return '';
-    const d = new Date(val);
-    const p = n => String(n).padStart(2,'0');
-    return `${p(d.getDate())}/${p(d.getMonth()+1)}/${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`;
-  }
-  const dataInicioEdit = dtLocalToBR(document.getElementById('fDataInicio').value);
-  const dataFimEdit    = dtLocalToBR(document.getElementById('fDataFim').value);
-
-  if(!payload.prioridade || !payload.local || !payload.equipamento || !payload.tipo_manutencao || !payload.executores.length || !payload.solicitante){ alert('Preencha os campos obrigatórios.'); return; }
-  if(editingOrderId){
-    if(!askConfirmation(`Tem certeza que deseja salvar as alterações da O.S. ${editingOrderId}?`)) return;
-    const ordem = await PCMDB.getOrder(editingOrderId);
-    if(!ordem){ alert('O.S. não encontrada.'); return; }
-    const novoStatus = document.getElementById('fStatus').value;
-    if(novoStatus !== ordem.status){
-      if(novoStatus === 'ANDAMENTO' && !ordem.data_inicio) ordem.data_inicio = PCMDB.nowBR();
-      if(novoStatus === 'FINALIZADA'){
-        if(!ordem.data_inicio) ordem.data_inicio = PCMDB.nowBR();
-        if(!ordem.data_fim) ordem.data_fim = PCMDB.nowBR();
-      }
-      if(novoStatus === 'ABERTA'){ ordem.data_inicio = ''; ordem.data_fim = ''; }
-      ordem.status = novoStatus;
-    }
-    // Aplicar datas manuais se preenchidas (sobrepõem a lógica automática)
-    if(dataInicioEdit) ordem.data_inicio = dataInicioEdit;
-    if(dataFimEdit)    ordem.data_fim    = dataFimEdit;
-    ordem.prioridade = payload.prioridade;
-    ordem.local = payload.local;
-    ordem.equipamento = payload.equipamento;
-    ordem.tipo_manutencao = payload.tipo_manutencao;
-    ordem.executores = [...payload.executores];
-    ordem.solicitante = payload.solicitante;
-    ordem.observacao_abertura = payload.observacao_abertura;
-    if(payload.data_abertura) ordem.data_abertura = payload.data_abertura;
-    if(ordem.status === 'FINALIZADA'){
-      ordem.componente = payload.componente || '';
-      ordem.causa_raiz = payload.causa_raiz || '';
-      ordem.o_que_feito = payload.o_que_feito || '';
-      ordem.observacao_fechamento = payload.o_que_feito || '';
-      ordem.o_que_falta = payload.o_que_falta || '';
-    }
-    await PCMDB.updateOrder(ordem);
-  } else {
-    if(!askConfirmation('Tem certeza que deseja criar esta O.S.?')) return;
-    await PCMDB.addOrder(payload);
-  }
-  await loadAndRender();
-  closeModal();
-  showPage('abertas');
-});
-
-document.getElementById('btnExportReport').addEventListener('click', exportSelectedReport);
-
-document.getElementById('backupFileInput').addEventListener('change', async (e)=>{
-  const file = e.target.files[0]; if(!file) return;
-  try{ const text = await file.text(); await PCMDB.importBackup(JSON.parse(text)); lists = await PCMDB.getLists(); renderAllDropdowns(); renderCadastros(); await loadAndRender(); alert('Backup importado com sucesso.'); }
-  catch(err){ alert(err.message || 'Erro ao importar backup.'); }
-  e.target.value='';
-});
-
+  } catch(err){ console.error(err); alert('Erro ao salvar o cadastro: ' + (err?.message || err)); }
+}
 function renderCadastroSearchResults(){
   const key = cadTypeSelect.value;
   const cfg = cadConfig[key];
   const q = normalizeValue(cadSearchInput.value || '').toLowerCase();
-  /* Busca em TODOS os itens (ativos + inativos) */
   const values = listForAll(cfg.listKey).filter(v => !q || String(v).toLowerCase().includes(q));
   if(!q){
     cadSearchResults.innerHTML = '<div class="cad-helper">Digite algo para localizar um cadastro específico.</div>';
@@ -1083,7 +899,7 @@ function renderCadastroSearchResults(){
   }).join('');
 }
 
-
+/* ── Relatórios (modo PCM) ── */
 function formatDateForFile(value){
   if(!value) return 'todos';
   return String(value).replace(/-/g,'');
@@ -1109,8 +925,6 @@ function reportRows(type, startDate, endDate){
   return [];
 }
 function reportCadastroRows(){
-  /* Relatório inclui todos os cadastros — ativos e inativos — com indicação do status.
-     A coluna especialidade só é preenchida nas linhas de Operador. */
   return [
     ...listForAll('local').map(v => ({ tipo:'Local',       ativo: isInactive('local', v) ? 'NÃO' : 'SIM', descricao:v, especialidade:'' })),
     ...listForAll('equipamento').map(v => ({ tipo:'Equipamento', ativo: isInactive('equipamento', v) ? 'NÃO' : 'SIM', descricao:v, especialidade:'' })),
@@ -1170,6 +984,20 @@ function buildReportSuffix(startDate, endDate){
   if(endDate) return `ate_${formatDateForFile(endDate)}`;
   return formatDateForFile('');
 }
+/* xlsx só é usado no modo PCM — carregado sob demanda para não pesar o carregamento padrão (Operador) */
+let _xlsxLoadPromise = null;
+function ensureXlsxLoaded(){
+  if(window.XLSX) return Promise.resolve();
+  if(_xlsxLoadPromise) return _xlsxLoadPromise;
+  _xlsxLoadPromise = new Promise((resolve, reject)=>{
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js';
+    script.onload = () => resolve();
+    script.onerror = () => { _xlsxLoadPromise = null; reject(new Error('Falha ao carregar a biblioteca de exportação XLSX. Verifique sua conexão e tente novamente.')); };
+    document.head.appendChild(script);
+  });
+  return _xlsxLoadPromise;
+}
 function downloadXlsx(rows, filename){
   const worksheet = XLSX.utils.json_to_sheet(rows);
   const workbook = XLSX.utils.book_new();
@@ -1196,180 +1024,104 @@ async function exportSelectedReport(){
     return;
   }
   if(format === 'xlsx'){
+    try { await ensureXlsxLoaded(); } catch(err){ alert(err.message); return; }
     downloadXlsx(rows, `relatorio_${type}_${suffix}.xlsx`);
     return;
   }
   downloadTextFile(toCsv(rows), `relatorio_${type}_${suffix}.csv`, 'text/csv;charset=utf-8');
 }
 
-function attendanceDateFor(order){
-  return order.data_fim || '';
-}
-function isFinishedOrder(order){
-  return String(order?.status || '').trim().toUpperCase() === 'FINALIZADA' && !!String(order?.data_fim || '').trim();
-}
-function equipmentHistory(order){
-  const equipamento = String(order?.equipamento || '').trim().toUpperCase();
-  const local = String(order?.local || '').trim().toUpperCase();
-  const sameCombo = ordens
-    .filter(o => isFinishedOrder(o)
-      && String(o.equipamento || '').trim().toUpperCase() === equipamento
-      && String(o.local || '').trim().toUpperCase() === local)
-    .sort((a,b)=> (PCMUtils.parseBR(attendanceDateFor(b))?.getTime() || 0) - (PCMUtils.parseBR(attendanceDateFor(a))?.getTime() || 0));
-  return {
-    total: sameCombo.length,
-    chave: `${equipamento} — ${local}`,
-    datas: [...new Set(sameCombo.map(o => attendanceDateFor(o)).filter(Boolean))]
-  };
-}
-function buildTooltipHtml(order, obsText){
-  const history = equipmentHistory(order);
-  const datesHtml = history.datas.length
-    ? history.datas.map(date => `<li>${PCMDB.escapeHtml(date)}</li>`).join('')
-    : '<li>Sem histórico anterior.</li>';
-  const faltaHtml = order.o_que_falta ? `
-    <div class="tooltip-divider"></div>
-    <div class="tooltip-title">⚠️ O que falta / próximos passos</div>
-    <div class="tooltip-text">${PCMDB.escapeHtml(order.o_que_falta)}</div>` : '';
-  return `
-    <div class="tooltip-title">Observação</div>
-    <div class="tooltip-text">${PCMDB.escapeHtml(obsText || '-')}</div>
-    ${faltaHtml}
-    <div class="tooltip-divider"></div>
-    <div class="tooltip-title">Histórico: ${PCMDB.escapeHtml(history.chave)}</div>
-    <div class="tooltip-meta"><b>Total de O.S. finalizadas:</b> ${history.total}</div>
-    <div class="tooltip-meta"><b>Datas registradas:</b></div>
-    <ul class="tooltip-list">${datesHtml}</ul>
-  `;
+/* ── Impressão ── */
+/* Ticket simples (usado no modo Operador) */
+function printOrder(id){
+  const order = ordens.find(o => String(o.id_os) === String(id));
+  if(!order) return;
+  const safe = (value) => PCMDB.escapeHtml(value == null || value === '' ? '—' : String(value));
+  const win = window.open('', '_blank', 'width=900,height=700');
+  if(!win) return;
+  const createdAt = order.data_abertura || order.data_inicio || order.data_fim || '';
+  const executores = Array.isArray(order.executores) && order.executores.length ? order.executores.join(' / ') : '—';
+  const solicitacao = order.observacao_abertura || order.descricao || '—';
+  const servicoFeito = order.o_que_feito || order.observacao_fechamento || ' ';
+  const pendencias = order.o_que_falta || ' ';
+  const origem = order.os_origem ? '#' + order.os_origem : '—';
+  win.document.write(`<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8">
+<title>O.S. ${safe(order.id_os)}</title>
+<style>
+  @page { size: A4; margin: 8mm; }
+  * { box-sizing: border-box; }
+  body { font-family: Arial, Helvetica, sans-serif; color:#111; margin:0; font-size:11px; line-height:1.2; }
+  .sheet { padding: 8mm; }
+  .head { display:flex; justify-content:space-between; align-items:flex-start; gap:10px; margin-bottom:8px; border-bottom:2px solid #111; padding-bottom:6px; }
+  .title { font-size:18px; font-weight:700; margin:0; }
+  .subtitle { font-size:10px; color:#444; margin-top:2px; }
+  .os-badge { border:1px solid #111; padding:4px 8px; font-weight:700; border-radius:999px; white-space:nowrap; }
+  .grid { display:grid; grid-template-columns: 1fr 1fr; gap:6px 10px; margin-bottom:8px; }
+  .field { border:1px solid #bbb; border-radius:6px; padding:5px 7px; min-height:34px; }
+  .field b { display:block; font-size:9px; text-transform:uppercase; letter-spacing:.35px; margin-bottom:3px; color:#555; }
+  .full { grid-column:1 / -1; }
+  .section { margin-top:8px; }
+  .section h3 { margin:0 0 4px; font-size:10px; text-transform:uppercase; letter-spacing:.45px; }
+  .box { border:1px solid #bbb; border-radius:6px; min-height:84px; padding:7px; }
+  .box.tall { min-height:120px; }
+  .signatures { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:24px; }
+  .sign { padding-top:36px; border-top:1px solid #111; text-align:center; font-size:10px; }
+</style>
+</head>
+<body>
+  <div class="sheet">
+    <div class="head">
+      <div>
+        <h1 class="title">Ordem de Serviço</h1>
+        <div class="subtitle">Ficha de execução para manutenção</div>
+      </div>
+      <div class="os-badge">O.S. ${safe(order.id_os)}</div>
+    </div>
+
+    <div class="grid">
+      <div class="field"><b>Status</b>${safe(order.status)}</div>
+      <div class="field"><b>Data</b>${safe(createdAt)}</div>
+      <div class="field"><b>Origem</b>${safe(origem)}</div>
+      <div class="field"><b>Solicitante</b>${safe(order.solicitante)}</div>
+      <div class="field"><b>Local</b>${safe(order.local)}</div>
+      <div class="field"><b>Equipamento</b>${safe(order.equipamento)}</div>
+      <div class="field"><b>Tipo de manutenção</b>${safe(order.tipo_manutencao)}</div>
+      <div class="field"><b>Prioridade</b>${safe(order.prioridade)}</div>
+      <div class="field full"><b>Executores</b>${safe(executores)}</div>
+      <div class="field full"><b>Componente</b>${safe(order.componente)}</div>
+    </div>
+
+    <div class="section">
+      <h3>Solicitação</h3>
+      <div class="box">${safe(solicitacao)}</div>
+    </div>
+
+    <div class="section">
+      <h3>Serviço executado</h3>
+      <div class="box tall">${safe(servicoFeito)}</div>
+    </div>
+
+    <div class="section">
+      <h3>Pendências / próximos passos</h3>
+      <div class="box">${safe(pendencias)}</div>
+    </div>
+
+    <div class="signatures">
+      <div class="sign">Mecânico responsável</div>
+      <div class="sign">Operação / solicitante</div>
+    </div>
+  </div>
+</body>
+</html>`);
+  win.document.close();
+  win.focus();
+  setTimeout(() => { win.print(); }, 150);
 }
 
-/* Atualiza os contadores numéricos nas abas */
-function updateTabBadges(){
-  const counts = {
-    abertas: ordens.filter(o=>o.status==='ABERTA').length,
-    andamento: ordens.filter(o=>o.status==='ANDAMENTO').length,
-    finalizadas: ordens.filter(o=>o.status==='FINALIZADA').length
-  };
-  document.querySelectorAll('[data-count]').forEach(el=>{
-    const total = counts[el.dataset.count] || 0;
-    el.textContent = total;
-    el.classList.toggle('is-hidden', total === 0);
-  });
-}
-
-
-
-/* Normaliza um valor para comparação nos KPIs: remove espaços extras e converte para maiúsculas */
-function normalizeKpiItem(value){ return String(value || '').trim().replace(/\s+/g,' ').toUpperCase(); }
-function splitForKpi(value){
-  const items = splitMultiValue(value).map(normalizeKpiItem).filter(Boolean);
-  return items.length ? items : ['SEM CADASTRO'];
-}
-function getKpiPairs(){
-  const pairs = [];
-  const seen = new Set();
-  const validStatus = new Set(['ABERTA','ANDAMENTO','FINALIZADA']);
-  const ds = kpiState.dateStart ? new Date(kpiState.dateStart) : null;
-  const de = kpiState.dateEnd   ? new Date(kpiState.dateEnd)   : null;
-  for(const order of (Array.isArray(ordens) ? ordens : [])){
-    const status = normalizeKpiItem(order?.status);
-    if(!validStatus.has(status)) continue;
-    const id = Number(order?.id_os);
-    if(!Number.isFinite(id)) continue;
-    if(ds || de){
-      const d = PCMUtils.parseBR(order.data_abertura || order.data_inicio || order.data_fim);
-      if(!d) continue;
-      if(ds && d < ds) continue;
-      if(de && d > de) continue;
-    }
-    const locais = splitForKpi(order?.local).filter(item => item !== 'SEM CADASTRO');
-    const equipamentos = splitForKpi(order?.equipamento).filter(item => item !== 'SEM CADASTRO');
-    if(!locais.length || !equipamentos.length) continue;
-    const tipo = normalizeKpiItem(order?.tipo_manutencao || '');
-    for(const local of locais){
-      for(const equipamento of equipamentos){
-        const key = `${id}||${status}||${local}||${equipamento}||${tipo}`;
-        if(seen.has(key)) continue;
-        seen.add(key);
-        pairs.push({ local, equipamento, id, status, tipo });
-      }
-    }
-  }
-  return pairs;
-}
-/* Soma horas paradas (data_fim - data_inicio) por local — apenas OS finalizadas */
-function getHorasParadasPorLocal(ordensFiltered, equipamentoFilter){
-  const totals = new Map();
-  for(const o of ordensFiltered){
-    if(String(o.status||'').toUpperCase()!=='FINALIZADA') continue;
-    const s=PCMUtils.parseBR(o.data_inicio), e=PCMUtils.parseBR(o.data_fim);
-    if(!s||!e||e<=s) continue;
-    const horas=(e-s)/3600000;
-    const locais=splitForKpi(o.local).filter(i=>i!=='SEM CADASTRO');
-    const equipamentos=splitForKpi(o.equipamento).filter(i=>i!=='SEM CADASTRO');
-    if(equipamentoFilter && !equipamentos.includes(equipamentoFilter)) continue;
-    for(const local of locais){ totals.set(local,(totals.get(local)||0)+horas); }
-  }
-  return [...totals.entries()].map(([nome,total])=>({nome,total:Math.round(total*10)/10})).sort((a,b)=>b.total-a.total||a.nome.localeCompare(b.nome,'pt-BR',{sensitivity:'base'})).slice(0,10);
-}
-/* Soma horas paradas (data_fim - data_inicio) por equipamento — apenas OS finalizadas */
-function getHorasParadasPorEquipamento(ordensFiltered, localFilter){
-  const totals = new Map();
-  for(const o of ordensFiltered){
-    if(String(o.status||'').toUpperCase()!=='FINALIZADA') continue;
-    const s=PCMUtils.parseBR(o.data_inicio), e=PCMUtils.parseBR(o.data_fim);
-    if(!s||!e||e<=s) continue;
-    const horas=(e-s)/3600000;
-    const locais=splitForKpi(o.local).filter(i=>i!=='SEM CADASTRO');
-    const equipamentos=splitForKpi(o.equipamento).filter(i=>i!=='SEM CADASTRO');
-    if(localFilter && !locais.includes(localFilter)) continue;
-    for(const equip of equipamentos){ totals.set(equip,(totals.get(equip)||0)+horas); }
-  }
-  return [...totals.entries()].map(([nome,total])=>({nome,total:Math.round(total*10)/10})).sort((a,b)=>b.total-a.total||a.nome.localeCompare(b.nome,'pt-BR',{sensitivity:'base'})).slice(0,10);
-}
-function countByDimension(pairs, dimension){
-  const totals = new Map();
-  for(const item of pairs){
-    const key = item[dimension];
-    totals.set(key, (totals.get(key) || 0) + 1);
-  }
-  return [...totals.entries()]
-    .map(([nome,total])=>({ nome, total }))
-    .sort((a,b)=> b.total - a.total || a.nome.localeCompare(b.nome,'pt-BR',{ numeric:true, sensitivity:'base' }))
-    .slice(0,10);
-}
-function filterPairsByText(pairs){
-  const q = String(kpiState.text || '').trim().toLowerCase();
-  if(!q) return pairs;
-  return pairs.filter(pair => `${pair.local} ${pair.equipamento}`.toLowerCase().includes(q));
-}
-function filterPairsByTipo(pairs){
-  if(!kpiState.tipo) return pairs;
-  return pairs.filter(pair => pair.tipo === kpiState.tipo);
-}
-function filterPairsForChart(pairs, dimension){
-  if(dimension === 'local' && kpiState.equipamento){
-    return pairs.filter(item => item.equipamento === kpiState.equipamento);
-  }
-  if(dimension === 'equipamento' && kpiState.local){
-    return pairs.filter(item => item.local === kpiState.local);
-  }
-  return pairs;
-}
-function filterPairsForSelection(pairs){
-  return pairs.filter(item => (!kpiState.local || item.local === kpiState.local) && (!kpiState.equipamento || item.equipamento === kpiState.equipamento));
-}
-function shortKpiLabel(label, limit = 22){
-  return label.length > limit ? `${label.slice(0, limit - 1)}…` : label;
-}
-function renderKpiTipoButtons(pairs){
-  if(!kpiTipoButtons) return;
-  const tipos = [...new Set(pairs.map(p => p.tipo).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR',{sensitivity:'base'}));
-  const allBtn = `<button class="btn ${!kpiState.tipo ? '' : 'btn-secondary'}" type="button" data-kpi-tipo="" style="padding:6px 12px;font-size:12px;font-weight:700">Todos</button>`;
-  const tipoBtns = tipos.map(t => `<button class="btn ${kpiState.tipo===t ? '' : 'btn-secondary'}" type="button" data-kpi-tipo="${PCMDB.escapeHtml(t)}" style="padding:6px 12px;font-size:12px;font-weight:700">${PCMDB.escapeHtml(t)}</button>`).join('');
-  kpiTipoButtons.innerHTML = `<span style="font-size:12px;font-weight:700;color:var(--muted);align-self:center">Tipo:</span> ${allBtn}${tipoBtns}`;
-}
-
+/* Ticket detalhado (usado no modo PCM) */
 function printableField(value, fallback='—'){
   if(Array.isArray(value)) return value.length ? value.join(' / ') : fallback;
   const cleaned = String(value || '').trim();
@@ -1481,8 +1233,7 @@ function buildOsPrintHtml(ordem){
 </body>
 </html>`;
 }
-/* Abre uma nova janela com a OS formatada para impressão em A4 */
-function printOrder(ordem){
+function printOrderDetalhado(ordem){
   const printWindow = window.open('', '_blank', 'width=980,height=760');
   if(!printWindow){
     alert('Não foi possível abrir a janela de impressão. Verifique se o navegador bloqueou pop-ups.');
@@ -1498,49 +1249,189 @@ function printOrder(ordem){
   };
 }
 
+/* ── Tooltip de histórico ── */
+function positionTooltip(clientX, clientY){
+  const margin = 16;
+  const cursorGap = 22;
+  const rect = tooltip.getBoundingClientRect();
+  const tipWidth = rect.width || 320;
+  const tipHeight = rect.height || 160;
+  let left = clientX + cursorGap;
+  let top = clientY + cursorGap;
+  if(left + tipWidth + margin > window.innerWidth){ left = clientX - tipWidth - cursorGap; }
+  if(top + tipHeight + margin > window.innerHeight){ top = clientY - tipHeight - cursorGap; }
+  left = Math.max(margin, Math.min(left, window.innerWidth - tipWidth - margin));
+  top = Math.max(margin, Math.min(top, window.innerHeight - tipHeight - margin));
+  tooltip.style.left = left + 'px';
+  tooltip.style.top = top + 'px';
+}
+function attendanceDateFor(order){ return order.data_fim || ''; }
+function isFinishedOrder(order){
+  return String(order?.status || '').trim().toUpperCase() === 'FINALIZADA' && !!String(order?.data_fim || '').trim();
+}
+function equipmentHistory(order){
+  const equipamento = String(order?.equipamento || '').trim().toUpperCase();
+  const local = String(order?.local || '').trim().toUpperCase();
+  const sameCombo = ordens
+    .filter(o => isFinishedOrder(o)
+      && String(o.equipamento || '').trim().toUpperCase() === equipamento
+      && String(o.local || '').trim().toUpperCase() === local)
+    .sort((a,b)=> (PCMUtils.parseBR(attendanceDateFor(b))?.getTime() || 0) - (PCMUtils.parseBR(attendanceDateFor(a))?.getTime() || 0));
+  return {
+    total: sameCombo.length,
+    chave: `${equipamento} — ${local}`,
+    datas: [...new Set(sameCombo.map(o => attendanceDateFor(o)).filter(Boolean))]
+  };
+}
+function buildTooltipHtml(order, obsText){
+  const history = equipmentHistory(order);
+  const datesHtml = history.datas.length
+    ? history.datas.map(date => `<li>${PCMDB.escapeHtml(date)}</li>`).join('')
+    : '<li>Sem histórico anterior.</li>';
+  const faltaHtml = order.o_que_falta ? `
+    <div class="tooltip-divider"></div>
+    <div class="tooltip-title">⚠️ O que falta / próximos passos</div>
+    <div class="tooltip-text">${PCMDB.escapeHtml(order.o_que_falta)}</div>` : '';
+  return `
+    <div class="tooltip-title">Observação</div>
+    <div class="tooltip-text">${PCMDB.escapeHtml(obsText || '-')}</div>
+    ${faltaHtml}
+    <div class="tooltip-divider"></div>
+    <div class="tooltip-title">Histórico: ${PCMDB.escapeHtml(history.chave)}</div>
+    <div class="tooltip-meta"><b>Total de O.S. finalizadas:</b> ${history.total}</div>
+    <div class="tooltip-meta"><b>Datas registradas:</b></div>
+    <ul class="tooltip-list">${datesHtml}</ul>
+  `;
+}
+document.addEventListener('mouseover', (e)=>{
+  const row=e.target.closest('tbody tr[data-obs]');
+  if(!row || !row.dataset.obs) return;
+  const order = ordens.find(o => String(o.id_os) === String(row.dataset.id));
+  if(!order) return;
+  currentRow=row;
+  tooltip.innerHTML = buildTooltipHtml(order, row.dataset.obs);
+  tooltip.style.display='block';
+  positionTooltip(e.clientX, e.clientY);
+});
+document.addEventListener('mousemove', (e)=>{ if(!currentRow) return; positionTooltip(e.clientX, e.clientY); });
+document.addEventListener('mouseout', (e)=>{ const row=e.target.closest('tbody tr[data-obs]'); if(row && row===currentRow){ currentRow=null; tooltip.style.display='none'; tooltip.innerHTML=''; } });
+
+/* ── KPIs ── */
+function normalizeKpiItem(value){ return String(value || '').trim().replace(/\s+/g,' ').toUpperCase(); }
+function splitForKpi(value){
+  const items = splitMultiValue(value).map(normalizeKpiItem).filter(Boolean);
+  return items.length ? items : ['SEM CADASTRO'];
+}
+function countByDimension(pairs, dimension){
+  const totals = new Map();
+  for(const item of pairs){ const key = item[dimension]; totals.set(key, (totals.get(key) || 0) + 1); }
+  return [...totals.entries()]
+    .map(([nome,total])=>({ nome, total }))
+    .sort((a,b)=> b.total - a.total || a.nome.localeCompare(b.nome,'pt-BR',{ numeric:true, sensitivity:'base' }))
+    .slice(0,10);
+}
+function filterPairsByText(pairs){
+  const q = String(kpiState.text || '').trim().toLowerCase();
+  if(!q) return pairs;
+  return pairs.filter(pair => `${pair.local} ${pair.equipamento}`.toLowerCase().includes(q));
+}
+function filterPairsByTipo(pairs){
+  if(!kpiState.tipo) return pairs;
+  return pairs.filter(pair => pair.tipo === kpiState.tipo);
+}
+function shortKpiLabel(label, limit = 22){ return label.length > limit ? `${label.slice(0, limit - 1)}…` : label; }
+function renderKpiTipoButtons(pairs){
+  if(!kpiTipoButtons) return;
+  const tipos = [...new Set(pairs.map(p => p.tipo).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR',{sensitivity:'base'}));
+  const allBtn = `<button class="btn ${!kpiState.tipo ? '' : 'btn-secondary'}" type="button" data-kpi-tipo="" style="padding:6px 12px;font-size:12px;font-weight:700">Todos</button>`;
+  const tipoBtns = tipos.map(t => `<button class="btn ${kpiState.tipo===t ? '' : 'btn-secondary'}" type="button" data-kpi-tipo="${PCMDB.escapeHtml(t)}" style="padding:6px 12px;font-size:12px;font-weight:700">${PCMDB.escapeHtml(t)}</button>`).join('');
+  kpiTipoButtons.innerHTML = `<span style="font-size:12px;font-weight:700;color:var(--muted);align-self:center">Tipo:</span> ${allBtn}${tipoBtns}`;
+}
+function renderKpiEspecialidadeButtons(ordensFiltered){
+  if(!kpiEspecialidadeButtons) return;
+  const especialidades = [...new Set(ordensFiltered.flatMap(especialidadesDaOrdem))].sort((a,b)=>a.localeCompare(b,'pt-BR',{sensitivity:'base'}));
+  const allBtn = `<button class="btn ${!kpiState.especialidade ? '' : 'btn-secondary'}" type="button" data-kpi-especialidade="" style="padding:6px 12px;font-size:12px;font-weight:700">Todas</button>`;
+  const btns = especialidades.map(e => `<button class="btn ${kpiState.especialidade===e ? '' : 'btn-secondary'}" type="button" data-kpi-especialidade="${PCMDB.escapeHtml(e)}" style="padding:6px 12px;font-size:12px;font-weight:700">${PCMDB.escapeHtml(e)}</button>`).join('');
+  kpiEspecialidadeButtons.innerHTML = `<span style="font-size:12px;font-weight:700;color:var(--muted);align-self:center">Especialidade:</span> ${allBtn}${btns}`;
+}
 function kpiChartWidth(container){
-  // Sobe até o painel pai para medir a largura real disponível
   const panel = container.closest('.kpi-panel') || container.closest('.kpi-chart-box') || container;
   const w = panel.clientWidth || panel.offsetWidth || container.clientWidth || container.offsetWidth;
-  return Math.max(260, w - 28); // 28px de padding interno do painel
+  return Math.max(260, w - 28);
 }
-/* Renderiza um gráfico de barras horizontais em SVG dentro do container informado */
 function renderKpiBarChart(container, items, config){
   if(!container) return;
   if(!items.length){ container.innerHTML = '<div class="empty">Sem dados para este recorte.</div>'; return; }
-  const W = kpiChartWidth(container);
-  const isMobile = W < 480;
-  const leftPad = isMobile ? 90 : 160;
-  const rightPad = isMobile ? 36 : 50;
-  const barHeight = isMobile ? 18 : 22;
-  const gap = isMobile ? 8 : 10;
-  const topPad = 18, bottomPad = 12;
-  const chartWidth = W - leftPad - rightPad;
-  const height = topPad + bottomPad + items.length * (barHeight + gap);
-  const max = Math.max(...items.map(i => i.total), 1);
-  const labelLimit = isMobile ? 12 : 22;
-  const ticks = Array.from({length: 5}, (_, idx)=>{
-    const value = Math.round((max / 4) * idx);
-    const x = leftPad + Math.round((chartWidth / 4) * idx);
+  const W=kpiChartWidth(container);
+  const isMobile=W<480;
+  const leftPad=isMobile?90:160, rightPad=isMobile?36:50;
+  const barHeight=isMobile?18:22, gap=isMobile?8:10;
+  const topPad=18, bottomPad=12;
+  const chartWidth=W-leftPad-rightPad, height=topPad+bottomPad+items.length*(barHeight+gap);
+  const max=Math.max(...items.map(i=>i.total),1);
+  const labelLimit=isMobile?12:22;
+  const ticks=Array.from({length:5},(_,idx)=>{
+    const value=Math.round((max/4)*idx), x=leftPad+Math.round((chartWidth/4)*idx);
     return `<g><line x1="${x}" y1="${topPad-4}" x2="${x}" y2="${height-bottomPad+2}" class="kpi-svg-grid"></line><text x="${x}" y="${topPad-6}" text-anchor="middle" class="kpi-svg-axis" style="font-size:${isMobile?7:9}px">${value}</text></g>`;
   }).join('');
-  const rows = items.map((item, idx)=>{
-    const y = topPad + idx * (barHeight + gap);
-    const barWidth = Math.max(6, Math.round((item.total / max) * chartWidth));
-    const activeValue = config.dimension === 'local' ? kpiState.local : config.dimension === 'equipamento' ? kpiState.equipamento : kpiState[config.dimension];
-    const isActive = activeValue === item.nome;
-    const shortLabel = PCMDB.escapeHtml(item.nome.length > labelLimit ? item.nome.slice(0, labelLimit-1)+'…' : item.nome);
-    const fullLabel = PCMDB.escapeHtml(item.nome);
-    const title = PCMDB.escapeHtml(`${idx+1}º | ${item.nome} | ${item.total}`);
-    return `<g class="kpi-svg-row ${isActive?'is-active':''}" data-kpi-dimension="${config.dimension}" data-kpi-value="${fullLabel}" tabindex="0" role="button" aria-label="${title}">
-      <title>${title}</title>
-      <text x="${leftPad-5}" y="${y+Math.round(barHeight*0.7)}" text-anchor="end" class="kpi-svg-label" style="font-size:${isMobile?8:10}px">${shortLabel}</text>
-      <rect x="${leftPad}" y="${y}" width="${chartWidth}" height="${barHeight}" rx="4" class="kpi-svg-track"></rect>
-      <rect x="${leftPad}" y="${y}" width="${barWidth}" height="${barHeight}" rx="4" class="kpi-svg-bar"></rect>
-      <text x="${leftPad+barWidth+4}" y="${y+Math.round(barHeight*0.7)}" class="kpi-svg-value" style="font-size:${isMobile?8:10}px">${item.total}</text>
-    </g>`;
+  const rows=items.map((item,idx)=>{
+    const y=topPad+idx*(barHeight+gap), barWidth=Math.max(6,Math.round((item.total/max)*chartWidth));
+    const activeValue=config.dimension==='local'?kpiState.local:config.dimension==='equipamento'?kpiState.equipamento:kpiState[config.dimension];
+    const isActive=activeValue===item.nome;
+    const shortLabel=PCMDB.escapeHtml(item.nome.length>labelLimit?item.nome.slice(0,labelLimit-1)+'…':item.nome);
+    const fullLabel=PCMDB.escapeHtml(item.nome);
+    const title=PCMDB.escapeHtml(`${idx+1}º | ${item.nome} | ${item.total}`);
+    return `<g class="kpi-svg-row ${isActive?'is-active':''}" data-kpi-dimension="${config.dimension}" data-kpi-value="${fullLabel}" tabindex="0" role="button" aria-label="${title}"><title>${title}</title><text x="${leftPad-5}" y="${y+Math.round(barHeight*0.7)}" text-anchor="end" class="kpi-svg-label" style="font-size:${isMobile?8:10}px">${shortLabel}</text><rect x="${leftPad}" y="${y}" width="${chartWidth}" height="${barHeight}" rx="4" class="kpi-svg-track"></rect><rect x="${leftPad}" y="${y}" width="${barWidth}" height="${barHeight}" rx="4" class="kpi-svg-bar"></rect><text x="${leftPad+barWidth+4}" y="${y+Math.round(barHeight*0.7)}" class="kpi-svg-value" style="font-size:${isMobile?8:10}px">${item.total}</text></g>`;
   }).join('');
-  container.innerHTML = `<div class="kpi-svg-wrap"><svg viewBox="0 0 ${W} ${height}" width="${W}" height="${height}" class="kpi-svg-chart" role="img" aria-label="${config.ariaLabel}">${ticks}${rows}</svg></div>`;
+  container.innerHTML=`<div class="kpi-svg-wrap"><svg viewBox="0 0 ${W} ${height}" width="${W}" height="${height}" class="kpi-svg-chart" role="img" aria-label="${config.ariaLabel}">${ticks}${rows}</svg></div>`;
+}
+function renderKpiBarChartHH(container,items,config){
+  if(!container) return;
+  if(!items.length){ container.innerHTML='<div class="empty">Sem dados para este recorte.</div>'; return; }
+  const W=kpiChartWidth(container);
+  const isMobile=W<480;
+  const leftPad=isMobile?90:160, rightPad=isMobile?42:60;
+  const barHeight=isMobile?18:22, gap=isMobile?8:10;
+  const topPad=18, bottomPad=12;
+  const chartWidth=W-leftPad-rightPad, height=topPad+bottomPad+items.length*(barHeight+gap);
+  const max=Math.max(...items.map(i=>i.total),1), barColor=config.color||'#0f6e56';
+  const labelLimit=isMobile?12:22;
+  const ticks=Array.from({length:5},(_,idx)=>{
+    const value=Math.round((max/4)*idx*10)/10, x=leftPad+Math.round((chartWidth/4)*idx);
+    return `<g><line x1="${x}" y1="${topPad-4}" x2="${x}" y2="${height-bottomPad+2}" class="kpi-svg-grid"></line><text x="${x}" y="${topPad-6}" text-anchor="middle" class="kpi-svg-axis" style="font-size:${isMobile?7:9}px">${value}h</text></g>`;
+  }).join('');
+  const rows=items.map((item,idx)=>{
+    const y=topPad+idx*(barHeight+gap), barWidth=Math.max(6,Math.round((item.total/max)*chartWidth));
+    const shortLabel=PCMDB.escapeHtml(item.nome.length>labelLimit?item.nome.slice(0,labelLimit-1)+'…':item.nome);
+    const hh=Math.floor(item.total), mm=Math.round((item.total-hh)*60);
+    const label=`${hh}h${mm>0?String(mm).padStart(2,'0')+'m':''}`;
+    return `<g class="kpi-svg-row" tabindex="0" role="img" aria-label="${PCMDB.escapeHtml(item.nome)}: ${label}"><title>${PCMDB.escapeHtml(item.nome)}: ${label}</title><text x="${leftPad-5}" y="${y+Math.round(barHeight*0.7)}" text-anchor="end" class="kpi-svg-label" style="font-size:${isMobile?8:10}px">${shortLabel}</text><rect x="${leftPad}" y="${y}" width="${chartWidth}" height="${barHeight}" rx="4" class="kpi-svg-track"></rect><rect x="${leftPad}" y="${y}" width="${barWidth}" height="${barHeight}" rx="4" class="kpi-svg-bar" style="fill:${barColor}"></rect><text x="${leftPad+barWidth+4}" y="${y+Math.round(barHeight*0.7)}" class="kpi-svg-value" style="font-size:${isMobile?8:10}px">${label}</text></g>`;
+  }).join('');
+  container.innerHTML=`<div class="kpi-svg-wrap"><svg viewBox="0 0 ${W} ${height}" width="${W}" height="${height}" class="kpi-svg-chart" role="img" aria-label="${config.ariaLabel||''}">${ticks}${rows}</svg></div>`;
+}
+function renderKpiPieChart(container,items){
+  if(!container) return;
+  if(!items.length){ container.innerHTML='<div class="empty">Sem dados.</div>'; return; }
+  const W=kpiChartWidth(container);
+  const isMobile=W<420;
+  const pieSize=isMobile?Math.min(W-20,200):280;
+  const r=Math.round(pieSize*0.45), cx=Math.round(pieSize/2), cy=Math.round(pieSize/2);
+  const TYPE_COLORS={'CORRETIVA':'#dc2626','PREVENTIVA':'#16a34a','MELHORIA':'#185FA5'};
+  const FALLBACK_COLORS=['#d97706','#0f6e56','#7c3aed','#0891b2'];
+  const total=items.reduce((s,i)=>s+i.total,0);
+  let angle=-Math.PI/2, slices='', legend='', fallbackIdx=0;
+  items.forEach((item,idx)=>{
+    const frac=item.total/total, a1=angle, a2=angle+frac*2*Math.PI;
+    const x1=cx+r*Math.cos(a1),y1=cy+r*Math.sin(a1),x2=cx+r*Math.cos(a2),y2=cy+r*Math.sin(a2);
+    const large=frac>0.5?1:0, color=TYPE_COLORS[item.nome]||(FALLBACK_COLORS[fallbackIdx++%FALLBACK_COLORS.length]), pct=Math.round(frac*100);
+    slices+=`<path d="M${cx},${cy} L${x1},${y1} A${r},${r} 0 ${large},1 ${x2},${y2} Z" fill="${color}" stroke="var(--surface)" stroke-width="2"><title>${item.nome}: ${item.total} (${pct}%)</title></path>`;
+    const midA=(a1+a2)/2;
+    if(pct>=5) slices+=`<text x="${cx+(r*0.65)*Math.cos(midA)}" y="${cy+(r*0.65)*Math.sin(midA)}" text-anchor="middle" dominant-baseline="middle" style="font-size:${isMobile?11:15}px;font-weight:700;fill:#fff">${pct}%</text>`;
+    legend+=`<div style="display:flex;align-items:center;gap:6px;font-size:${isMobile?11:13}px"><span style="width:12px;height:12px;border-radius:3px;background:${color};flex-shrink:0"></span><span style="color:var(--text)">${item.nome}</span><span style="margin-left:auto;font-weight:700;color:var(--text)">${item.total}</span></div>`;
+    angle=a2;
+  });
+  const flexDir=isMobile?'column':'row';
+  container.innerHTML=`<div style="display:flex;flex-direction:${flexDir};gap:16px;align-items:center;flex-wrap:wrap;padding:8px 0"><svg viewBox="0 0 ${pieSize} ${pieSize}" style="width:${pieSize}px;height:${pieSize}px;flex-shrink:0">${slices}</svg><div style="display:grid;gap:6px;flex:1;min-width:100px">${legend}</div></div>`;
 }
 function getOperadorAtendimentos(ordensFiltered){
   const totals = new Map();
@@ -1550,7 +1441,6 @@ function getOperadorAtendimentos(ordensFiltered){
   }
   return [...totals.entries()].map(([nome,total])=>({nome,total})).sort((a,b)=>b.total-a.total||a.nome.localeCompare(b.nome,'pt-BR',{sensitivity:'base'})).slice(0,10);
 }
-/* Soma as horas trabalhadas por executor (só OS finalizadas com início e fim) e retorna o top 10 */
 function getHomenHora(ordensFiltered){
   const totals = new Map();
   for(const o of ordensFiltered){
@@ -1563,7 +1453,6 @@ function getHomenHora(ordensFiltered){
   }
   return [...totals.entries()].map(([nome,total])=>({nome,total:Math.round(total*10)/10})).sort((a,b)=>b.total-a.total||a.nome.localeCompare(b.nome,'pt-BR',{sensitivity:'base'})).slice(0,10);
 }
-/* Calcula o MTTR (Tempo Médio para Reparo) por equipamento+local, apenas OS corretivas finalizadas */
 function getMTTR(ordensFiltered){
   const map = new Map();
   for(const o of ordensFiltered){
@@ -1610,20 +1499,11 @@ function getHHPorTipo(ordensFiltered){
   }
   return [...map.entries()].map(([nome,total])=>({nome,total:Math.round(total*10)/10})).sort((a,b)=>b.total-a.total);
 }
-/* Especialidades (sem repetir) dos executores de uma O.S., a partir das listas de cadastro */
-function especialidadesDaOrdem(order){
-  const nomes = Array.isArray(order.executores) ? order.executores : splitMultiValue(order.executores);
-  return [...new Set(nomes.map(especialidadeDoOperador).filter(Boolean))];
-}
-/* Conta O.S. por especialidade do operador (uma O.S. pode contar para mais de uma especialidade) */
 function getAtendimentosPorEspecialidade(ordensFiltered){
   const totals = new Map();
-  for(const o of ordensFiltered){
-    for(const esp of especialidadesDaOrdem(o)){ totals.set(esp, (totals.get(esp)||0)+1); }
-  }
+  for(const o of ordensFiltered){ for(const esp of especialidadesDaOrdem(o)){ totals.set(esp, (totals.get(esp)||0)+1); } }
   return [...totals.entries()].map(([nome,total])=>({nome,total})).sort((a,b)=>b.total-a.total||a.nome.localeCompare(b.nome,'pt-BR',{sensitivity:'base'}));
 }
-/* Soma as horas trabalhadas por especialidade (só OS finalizadas com início e fim) */
 function getHHPorEspecialidade(ordensFiltered){
   const totals = new Map();
   for(const o of ordensFiltered){
@@ -1635,27 +1515,13 @@ function getHHPorEspecialidade(ordensFiltered){
   }
   return [...totals.entries()].map(([nome,total])=>({nome,total:Math.round(total*10)/10})).sort((a,b)=>b.total-a.total||a.nome.localeCompare(b.nome,'pt-BR',{sensitivity:'base'}));
 }
-/* Botões de filtro por especialidade na aba KPI, no mesmo estilo do filtro por Tipo */
-function renderKpiEspecialidadeButtons(ordensFiltered){
-  if(!kpiEspecialidadeButtons) return;
-  const especialidades = [...new Set(ordensFiltered.flatMap(especialidadesDaOrdem))].sort((a,b)=>a.localeCompare(b,'pt-BR',{sensitivity:'base'}));
-  const allBtn = `<button class="btn ${!kpiState.especialidade ? '' : 'btn-secondary'}" type="button" data-kpi-especialidade="" style="padding:6px 12px;font-size:12px;font-weight:700">Todas</button>`;
-  const btns = especialidades.map(e => `<button class="btn ${kpiState.especialidade===e ? '' : 'btn-secondary'}" type="button" data-kpi-especialidade="${PCMDB.escapeHtml(e)}" style="padding:6px 12px;font-size:12px;font-weight:700">${PCMDB.escapeHtml(e)}</button>`).join('');
-  kpiEspecialidadeButtons.innerHTML = `<span style="font-size:12px;font-weight:700;color:var(--muted);align-self:center">Especialidade:</span> ${allBtn}${btns}`;
-}
-/* Renderiza os cartões de totais no topo da aba KPI (Total, Abertas, Andamento, Finalizadas, % Corretiva, MTTR, Horas Paradas) */
+/* Renderiza os cartões de totais no topo da aba KPI — 5 no modo Operador, 7 no modo PCM (soma % Corretiva e MTTR Geral) */
 function renderKpiCards(ordensFiltered){
   if(!kpiCards) return;
   const fin=ordensFiltered.filter(o=>String(o.status||'').toUpperCase()==='FINALIZADA');
   const ab=ordensFiltered.filter(o=>String(o.status||'').toUpperCase()==='ABERTA');
   const and=ordensFiltered.filter(o=>String(o.status||'').toUpperCase()==='ANDAMENTO');
-  const corr=ordensFiltered.filter(o=>normalizeKpiItem(o.tipo_manutencao)==='CORRETIVA');
   const total=ordensFiltered.length;
-  const pctCorr=total?Math.round((corr.length/total)*100):0;
-  let mttrGeral='-';
-  const corrFin=fin.filter(o=>normalizeKpiItem(o.tipo_manutencao)==='CORRETIVA');
-  if(corrFin.length){ let soma=0,cnt=0; for(const o of corrFin){ const s=PCMUtils.parseBR(o.data_inicio),e=PCMUtils.parseBR(o.data_fim); if(s&&e&&e>s){soma+=(e-s)/3600000;cnt++;} } if(cnt){ const totalMin=Math.round((soma/cnt)*60); const hh=Math.floor(totalMin/60); const mm=totalMin%60; mttrGeral=hh+'h '+(mm<10?'0':'')+mm+'min'; } }
-  /* Calcula total de horas paradas: soma da duração (data_fim - data_inicio) de todas as OS finalizadas no filtro */
   let totalHorasParadas='-';
   { let somaHP=0,cntHP=0; for(const o of fin){ const s=PCMUtils.parseBR(o.data_inicio),e=PCMUtils.parseBR(o.data_fim); if(s&&e&&e>s){somaHP+=(e-s)/3600000;cntHP++;} } if(cntHP){ const hhP=Math.floor(somaHP); const mmP=Math.round((somaHP-hhP)*60); totalHorasParadas=hhP+'h'+(mmP>0?String(mmP).padStart(2,'0')+'m':''); } else if(fin.length){ totalHorasParadas='0h'; } }
   const cards=[
@@ -1663,64 +1529,21 @@ function renderKpiCards(ordensFiltered){
     {label:'Abertas',value:ab.length,color:'#2563eb'},
     {label:'Em andamento',value:and.length,color:'#f59e0b'},
     {label:'Finalizadas',value:fin.length,color:'#16a34a'},
-    {label:'% Corretiva',value:pctCorr+'%',color:pctCorr>60?'#dc2626':'#185FA5'},
-    {label:'MTTR Geral',value:mttrGeral,color:'#0f6e56'},
-    {label:'Horas Paradas',value:totalHorasParadas,color:'#7c3aed'},
   ];
+  if(isPcmMode()){
+    const corr=ordensFiltered.filter(o=>normalizeKpiItem(o.tipo_manutencao)==='CORRETIVA');
+    const pctCorr=total?Math.round((corr.length/total)*100):0;
+    let mttrGeral='-';
+    const corrFin=fin.filter(o=>normalizeKpiItem(o.tipo_manutencao)==='CORRETIVA');
+    if(corrFin.length){ let soma=0,cnt=0; for(const o of corrFin){ const s=PCMUtils.parseBR(o.data_inicio),e=PCMUtils.parseBR(o.data_fim); if(s&&e&&e>s){soma+=(e-s)/3600000;cnt++;} } if(cnt){ const totalMin=Math.round((soma/cnt)*60); const hh=Math.floor(totalMin/60); const mm=totalMin%60; mttrGeral=hh+'h '+(mm<10?'0':'')+mm+'min'; } }
+    cards.push({label:'% Corretiva',value:pctCorr+'%',color:pctCorr>60?'#dc2626':'#185FA5'});
+    cards.push({label:'MTTR Geral',value:mttrGeral,color:'#0f6e56'});
+  }
+  cards.push({label:'Horas Paradas',value:totalHorasParadas,color:'#7c3aed'});
   kpiCards.innerHTML=cards.map(c=>`<div style="background:var(--surface-alt);border:1px solid var(--panel-border);border-radius:10px;padding:12px 14px;text-align:center"><div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">${c.label}</div><div style="font-size:26px;font-weight:900;color:${c.color};line-height:1">${c.value}</div></div>`).join('');
 }
-function renderKpiPieChart(container,items){
-  if(!container) return;
-  if(!items.length){ container.innerHTML='<div class="empty">Sem dados.</div>'; return; }
-  const W=kpiChartWidth(container);
-  const isMobile=W<420;
-  const pieSize=isMobile?Math.min(W-20,200):280;
-  const r=Math.round(pieSize*0.45), cx=Math.round(pieSize/2), cy=Math.round(pieSize/2);
-  /* Cores fixas por tipo — garante que cada tipo tenha sempre a mesma cor independente da ordem */
-  const TYPE_COLORS={'CORRETIVA':'#dc2626','PREVENTIVA':'#16a34a','MELHORIA':'#185FA5'};
-  const FALLBACK_COLORS=['#d97706','#0f6e56','#7c3aed','#0891b2'];
-  const total=items.reduce((s,i)=>s+i.total,0);
-  let angle=-Math.PI/2, slices='', legend='', fallbackIdx=0;
-  items.forEach((item,idx)=>{
-    const frac=item.total/total, a1=angle, a2=angle+frac*2*Math.PI;
-    const x1=cx+r*Math.cos(a1),y1=cy+r*Math.sin(a1),x2=cx+r*Math.cos(a2),y2=cy+r*Math.sin(a2);
-    const large=frac>0.5?1:0, color=TYPE_COLORS[item.nome]||(FALLBACK_COLORS[fallbackIdx++%FALLBACK_COLORS.length]), pct=Math.round(frac*100);
-    slices+=`<path d="M${cx},${cy} L${x1},${y1} A${r},${r} 0 ${large},1 ${x2},${y2} Z" fill="${color}" stroke="var(--surface)" stroke-width="2"><title>${item.nome}: ${item.total} (${pct}%)</title></path>`;
-    const midA=(a1+a2)/2;
-    if(pct>=5) slices+=`<text x="${cx+(r*0.65)*Math.cos(midA)}" y="${cy+(r*0.65)*Math.sin(midA)}" text-anchor="middle" dominant-baseline="middle" style="font-size:${isMobile?11:15}px;font-weight:700;fill:#fff">${pct}%</text>`;
-    legend+=`<div style="display:flex;align-items:center;gap:6px;font-size:${isMobile?11:13}px"><span style="width:12px;height:12px;border-radius:3px;background:${color};flex-shrink:0"></span><span style="color:var(--text)">${item.nome}</span><span style="margin-left:auto;font-weight:700;color:var(--text)">${item.total}</span></div>`;
-    angle=a2;
-  });
-  const flexDir=isMobile?'column':'row';
-  container.innerHTML=`<div style="display:flex;flex-direction:${flexDir};gap:16px;align-items:center;flex-wrap:wrap;padding:8px 0"><svg viewBox="0 0 ${pieSize} ${pieSize}" style="width:${pieSize}px;height:${pieSize}px;flex-shrink:0">${slices}</svg><div style="display:grid;gap:6px;flex:1;min-width:100px">${legend}</div></div>`;
-}
-function renderKpiBarChartHH(container,items,config){
-  if(!container) return;
-  if(!items.length){ container.innerHTML='<div class="empty">Sem dados para este recorte.</div>'; return; }
-  const W=kpiChartWidth(container);
-  const isMobile=W<480;
-  const leftPad=isMobile?90:160, rightPad=isMobile?42:60;
-  const barHeight=isMobile?18:22, gap=isMobile?8:10;
-  const topPad=18, bottomPad=12;
-  const chartWidth=W-leftPad-rightPad, height=topPad+bottomPad+items.length*(barHeight+gap);
-  const max=Math.max(...items.map(i=>i.total),1), barColor=config.color||'#0f6e56';
-  const labelLimit=isMobile?12:22;
-  const ticks=Array.from({length:5},(_,idx)=>{
-    const value=Math.round((max/4)*idx*10)/10, x=leftPad+Math.round((chartWidth/4)*idx);
-    return `<g><line x1="${x}" y1="${topPad-4}" x2="${x}" y2="${height-bottomPad+2}" class="kpi-svg-grid"></line><text x="${x}" y="${topPad-6}" text-anchor="middle" class="kpi-svg-axis" style="font-size:${isMobile?7:9}px">${value}h</text></g>`;
-  }).join('');
-  const rows=items.map((item,idx)=>{
-    const y=topPad+idx*(barHeight+gap), barWidth=Math.max(6,Math.round((item.total/max)*chartWidth));
-    const shortLabel=PCMDB.escapeHtml(item.nome.length>labelLimit?item.nome.slice(0,labelLimit-1)+'…':item.nome);
-    const hh=Math.floor(item.total), mm=Math.round((item.total-hh)*60);
-    const label=`${hh}h${mm>0?String(mm).padStart(2,'0')+'m':''}`;
-    return `<g class="kpi-svg-row" tabindex="0" role="img" aria-label="${PCMDB.escapeHtml(item.nome)}: ${label}"><title>${PCMDB.escapeHtml(item.nome)}: ${label}</title><text x="${leftPad-5}" y="${y+Math.round(barHeight*0.7)}" text-anchor="end" class="kpi-svg-label" style="font-size:${isMobile?8:10}px">${shortLabel}</text><rect x="${leftPad}" y="${y}" width="${chartWidth}" height="${barHeight}" rx="4" class="kpi-svg-track"></rect><rect x="${leftPad}" y="${y}" width="${barWidth}" height="${barHeight}" rx="4" class="kpi-svg-bar" style="fill:${barColor}"></rect><text x="${leftPad+barWidth+4}" y="${y+Math.round(barHeight*0.7)}" class="kpi-svg-value" style="font-size:${isMobile?8:10}px">${label}</text></g>`;
-  }).join('');
-  container.innerHTML=`<div class="kpi-svg-wrap"><svg viewBox="0 0 ${W} ${height}" width="${W}" height="${height}" class="kpi-svg-chart" role="img" aria-label="${config.ariaLabel||''}">${ticks}${rows}</svg></div>`;
-}
-/* Recalcula e redesenha todos os gráficos e cards da aba KPI */
+/* Recalcula e redesenha todos os gráficos e cards da aba KPI — painéis extras (MTTR/MTBF/Tipo/HH por Tipo) só no modo PCM */
 function renderKpis(){
-  // Filtro unificado para todos os gráficos
   const ds=kpiState.dateStart?new Date(kpiState.dateStart):null, de=kpiState.dateEnd?new Date(kpiState.dateEnd):null;
   const ordensFiltered=ordens.filter(o=>{
     const d=PCMUtils.parseBR(o.data_abertura||o.data_inicio||o.data_fim);
@@ -1730,8 +1553,6 @@ function renderKpis(){
     if(kpiState.text){ const q=kpiState.text.toLowerCase(); if(!`${o.local||''} ${o.equipamento||''}`.toLowerCase().includes(q)) return false; }
     return true;
   });
-
-  // Reconstruir pares a partir de ordensFiltered (para Top 10 respeitarem todos os filtros)
   const seen=new Set(), pairs=[];
   const validStatus=new Set(['ABERTA','ANDAMENTO','FINALIZADA']);
   for(const o of ordensFiltered){
@@ -1746,7 +1567,6 @@ function renderKpis(){
       pairs.push({local,equipamento:equip,id,status,tipo});
     }}
   }
-
   renderKpiTipoButtons(pairs);
   renderKpiEspecialidadeButtons(ordensFiltered);
   const locaisPairs=kpiState.equipamento?pairs.filter(p=>p.equipamento===kpiState.equipamento):pairs;
@@ -1755,17 +1575,17 @@ function renderKpis(){
   renderKpiBarChartHH(chartKpiHorasEquipamentos,getHorasParadasPorEquipamento(ordensFiltered,kpiState.local||null),{ariaLabel:'Top 10 equipamentos por horas paradas',color:'#7c3aed'});
   renderKpiBarChart(chartKpiLocais,countByDimension(locaisPairs,'local'),{dimension:'local',label:'local',ariaLabel:'Top 10 locais'});
   renderKpiBarChart(chartKpiEquipamentos,countByDimension(equipPairs,'equipamento'),{dimension:'equipamento',label:'equipamento',ariaLabel:'Top 10 equipamentos'});
-
   renderKpiCards(ordensFiltered);
   renderKpiBarChart(chartKpiOperadores,getOperadorAtendimentos(ordensFiltered),{dimension:'operador',label:'operador',ariaLabel:'Operador por atendimentos'});
   renderKpiBarChartHH(chartKpiHH,getHomenHora(ordensFiltered),{ariaLabel:'Homem Hora',color:'#0f6e56'});
-  renderKpiBarChartHH(chartKpiMTTR,getMTTR(ordensFiltered),{ariaLabel:'MTTR',color:'#dc2626'});
-  renderKpiBarChartHH(chartKpiMTBF,getMTBF(ordensFiltered),{ariaLabel:'MTBF',color:'#185FA5'});
-  renderKpiPieChart(chartKpiTipo,getDistribuicaoTipo(ordensFiltered));
-  renderKpiBarChartHH(chartKpiHHTipo,getHHPorTipo(ordensFiltered),{ariaLabel:'HH por tipo',color:'#7c3aed'});
+  if(isPcmMode()){
+    renderKpiBarChartHH(chartKpiMTTR,getMTTR(ordensFiltered),{ariaLabel:'MTTR',color:'#dc2626'});
+    renderKpiBarChartHH(chartKpiMTBF,getMTBF(ordensFiltered),{ariaLabel:'MTBF',color:'#185FA5'});
+    renderKpiPieChart(chartKpiTipo,getDistribuicaoTipo(ordensFiltered));
+    renderKpiBarChartHH(chartKpiHHTipo,getHHPorTipo(ordensFiltered),{ariaLabel:'HH por tipo',color:'#7c3aed'});
+  }
   renderKpiBarChart(chartKpiEspecialidade,getAtendimentosPorEspecialidade(ordensFiltered),{dimension:'especialidade',label:'especialidade',ariaLabel:'Atendimentos por especialidade'});
   renderKpiBarChartHH(chartKpiHHEspecialidade,getHHPorEspecialidade(ordensFiltered),{ariaLabel:'HH por especialidade',color:'#0891b2'});
-
   const tipoHint=kpiState.tipo?` | Tipo: ${kpiState.tipo}`:'';
   if(kpiLocaisHint) kpiLocaisHint.textContent=(kpiState.equipamento?`Filtrado por equipamento: ${kpiState.equipamento}`:'Todos os equipamentos')+tipoHint;
   if(kpiEquipamentosHint) kpiEquipamentosHint.textContent=(kpiState.local?`Filtrado por local: ${kpiState.local}`:'Todos os locais')+tipoHint;
@@ -1773,6 +1593,36 @@ function renderKpis(){
   const kpiHorasEquipamentosHint=document.getElementById('kpiHorasEquipamentosHint');
   if(kpiHorasLocaisHint) kpiHorasLocaisHint.textContent=(kpiState.equipamento?`Filtrado por equipamento: ${kpiState.equipamento}`:'Todos os equipamentos')+tipoHint;
   if(kpiHorasEquipamentosHint) kpiHorasEquipamentosHint.textContent=(kpiState.local?`Filtrado por local: ${kpiState.local}`:'Todos os locais')+tipoHint;
+}
+/* Soma horas paradas (data_fim - data_inicio) por local — apenas OS finalizadas */
+function getHorasParadasPorLocal(ordensFiltered, equipamentoFilter){
+  const totals = new Map();
+  for(const o of ordensFiltered){
+    if(String(o.status||'').toUpperCase()!=='FINALIZADA') continue;
+    const s=PCMUtils.parseBR(o.data_inicio), e=PCMUtils.parseBR(o.data_fim);
+    if(!s||!e||e<=s) continue;
+    const horas=(e-s)/3600000;
+    const locais=splitForKpi(o.local).filter(i=>i!=='SEM CADASTRO');
+    const equipamentos=splitForKpi(o.equipamento).filter(i=>i!=='SEM CADASTRO');
+    if(equipamentoFilter && !equipamentos.includes(equipamentoFilter)) continue;
+    for(const local of locais){ totals.set(local,(totals.get(local)||0)+horas); }
+  }
+  return [...totals.entries()].map(([nome,total])=>({nome,total:Math.round(total*10)/10})).sort((a,b)=>b.total-a.total||a.nome.localeCompare(b.nome,'pt-BR',{sensitivity:'base'})).slice(0,10);
+}
+/* Soma horas paradas (data_fim - data_inicio) por equipamento — apenas OS finalizadas */
+function getHorasParadasPorEquipamento(ordensFiltered, localFilter){
+  const totals = new Map();
+  for(const o of ordensFiltered){
+    if(String(o.status||'').toUpperCase()!=='FINALIZADA') continue;
+    const s=PCMUtils.parseBR(o.data_inicio), e=PCMUtils.parseBR(o.data_fim);
+    if(!s||!e||e<=s) continue;
+    const horas=(e-s)/3600000;
+    const locais=splitForKpi(o.local).filter(i=>i!=='SEM CADASTRO');
+    const equipamentos=splitForKpi(o.equipamento).filter(i=>i!=='SEM CADASTRO');
+    if(localFilter && !locais.includes(localFilter)) continue;
+    for(const equip of equipamentos){ totals.set(equip,(totals.get(equip)||0)+horas); }
+  }
+  return [...totals.entries()].map(([nome,total])=>({nome,total:Math.round(total*10)/10})).sort((a,b)=>b.total-a.total||a.nome.localeCompare(b.nome,'pt-BR',{sensitivity:'base'})).slice(0,10);
 }
 function handleKpiInteraction(event){
   const tipoBtn=event.target.closest('[data-kpi-tipo]');
@@ -1786,93 +1636,6 @@ function handleKpiInteraction(event){
   kpiState[dimension]=kpiState[dimension]===value?null:value;
   renderKpis();
 }
-
-/* Quantidade de OS finalizadas exibidas por página na tabela do PCM */
-const FINALIZADAS_PER_PAGE = 30;
-let finalizadasPage = 0;
-
-function renderTable(){
-  const abertas = ordens.filter(o=>o.status==='ABERTA');
-  const andamento = ordens.filter(o=>o.status==='ANDAMENTO');
-  const finalizadas = ordens.filter(o=>o.status==='FINALIZADA');
-  const acoes = o => `<div class="action-group"><button class="btn-icon" type="button" data-os-print="${o.id_os}" title="Imprimir O.S.">🖨️</button><button class="btn-icon btn-icon-edit" type="button" data-os-edit="${o.id_os}" title="Editar O.S.">✏️</button><button class="btn-icon btn-icon-delete" type="button" data-os-delete="${o.id_os}" title="Excluir O.S.">🗑️</button></div>`;
-
-  tbodyAbertas.innerHTML = abertas.length ? abertas.map(o=>`
-    <tr data-id="${o.id_os}" data-obs="${PCMDB.escapeHtml(o.observacao_abertura || '')}" class="${o.pendente ? 'is-pendente' : ''}">
-      <td>${o.pendente ? '<span class="badge pendente">🔄 PENDENTE</span>' : '<span class="badge aberta">ABERTA</span>'}</td>
-      <td>${PCMDB.escapeHtml(o.data_abertura)}</td>
-      <td><span class="pill ${PCMDB.priorityClass(o.prioridade)}">${PCMDB.escapeHtml(o.prioridade)}</span></td>
-      <td>${o.id_os}</td>
-      <td>${PCMDB.escapeHtml(o.local)}</td>
-      <td>${PCMDB.escapeHtml(o.equipamento)}</td>
-      <td>${PCMDB.escapeHtml(o.tipo_manutencao)}</td>
-      <td>${o.executores?.length ? PCMDB.escapeHtml(o.executores.join(' / ')) : '<span style="color:#d97706;font-weight:800">⚠️ A definir</span>'}</td>
-      <td>${PCMDB.escapeHtml(especialidadesFor(o.executores))}</td>
-      <td>${PCMDB.escapeHtml(o.solicitante)}</td>
-      <td>${acoes(o)}</td>
-    </tr>`).join('') : `<tr><td colspan="11" class="empty">Nenhuma O.S. aberta.</td></tr>`;
-
-  tbodyAndamento.innerHTML = andamento.length ? andamento.map(o=>`
-    <tr data-id="${o.id_os}" data-obs="${PCMDB.escapeHtml(o.observacao_abertura || '')}" class="${o.pendente ? 'is-pendente' : ''}">
-      <td><span class="badge andamento">ANDAMENTO</span></td>
-      <td>${PCMDB.escapeHtml(o.data_inicio)}</td>
-      <td><span class="pill ${PCMDB.priorityClass(o.prioridade)}">${PCMDB.escapeHtml(o.prioridade)}</span></td>
-      <td>${o.id_os}</td>
-      <td>${PCMDB.escapeHtml(o.local)}</td>
-      <td>${PCMDB.escapeHtml(o.equipamento)}</td>
-      <td>${PCMDB.escapeHtml(o.tipo_manutencao)}</td>
-      <td>${PCMDB.escapeHtml((o.executores||[]).join(' / '))}</td>
-      <td>${PCMDB.escapeHtml(especialidadesFor(o.executores))}</td>
-      <td>${PCMDB.escapeHtml(o.solicitante)}</td>
-      <td>${PCMDB.elapsedHHMM(o.data_inicio)}</td>
-      <td>${acoes(o)}</td>
-    </tr>`).join('') : `<tr><td colspan="12" class="empty">Nenhuma O.S. em andamento.</td></tr>`;
-
-  const totalPages = Math.max(1, Math.ceil(finalizadas.length / FINALIZADAS_PER_PAGE));
-  if(finalizadasPage >= totalPages) finalizadasPage = 0;
-
-  // Delega para renderFinalizadasFiltradas que respeita o filtro de busca
-  renderFinalizadasFiltradas((searchInput.value||'').trim().toLowerCase());
-  applyFilter();
-}
-/* Busca todas as OS do banco e redesenha a página inteira */
-async function loadAndRender(){ ordens = await PCMDB.getAllOrders(); updateTabBadges(); renderTable(); renderKpis(); }
-
-function positionTooltip(clientX, clientY){
-  const margin = 16;
-  const cursorGap = 22;
-  const rect = tooltip.getBoundingClientRect();
-  const tipWidth = rect.width || 320;
-  const tipHeight = rect.height || 160;
-  let left = clientX + cursorGap;
-  let top = clientY + cursorGap;
-
-  if(left + tipWidth + margin > window.innerWidth){
-    left = clientX - tipWidth - cursorGap;
-  }
-  if(top + tipHeight + margin > window.innerHeight){
-    top = clientY - tipHeight - cursorGap;
-  }
-
-  left = Math.max(margin, Math.min(left, window.innerWidth - tipWidth - margin));
-  top = Math.max(margin, Math.min(top, window.innerHeight - tipHeight - margin));
-
-  tooltip.style.left = left + 'px';
-  tooltip.style.top = top + 'px';
-}
-document.addEventListener('mouseover', (e)=>{
-  const row=e.target.closest('tbody tr[data-obs]');
-  if(!row || !row.dataset.obs) return;
-  const order = ordens.find(o => String(o.id_os) === String(row.dataset.id));
-  if(!order) return;
-  currentRow=row;
-  tooltip.innerHTML = buildTooltipHtml(order, row.dataset.obs);
-  tooltip.style.display='block';
-  positionTooltip(e.clientX, e.clientY);
-});
-document.addEventListener('mousemove', (e)=>{ if(!currentRow) return; positionTooltip(e.clientX, e.clientY); });
-document.addEventListener('mouseout', (e)=>{ const row=e.target.closest('tbody tr[data-obs]'); if(row && row===currentRow){ currentRow=null; tooltip.style.display='none'; tooltip.innerHTML=''; } });
-
 chartKpiLocais?.addEventListener('click', handleKpiInteraction);
 chartKpiEquipamentos?.addEventListener('click', handleKpiInteraction);
 chartKpiLocais?.addEventListener('keydown', (event)=>{ if(event.key==='Enter' || event.key===' '){ event.preventDefault(); handleKpiInteraction(event); } });
@@ -1894,21 +1657,609 @@ document.getElementById('kpiDateClear')?.addEventListener('click', ()=>{
   renderKpis();
 });
 
-/* Ponto de entrada: inicializa o banco, carrega as listas, renderiza os dados
-   e liga o polling que mantém a página sincronizada com o banco */
-/* Busca init + lists + inactiveLists + ordens em UMA ÚNICA chamada ao Apps Script
-   (getInitialData). Antes eram até 4 chamadas separadas por carregamento — mesmo
-   em paralelo, isso gera 4 execuções simultâneas no Apps Script por pessoa que abre
-   a página, e o limite de execuções concorrentes do backend vira gargalo quando
-   várias pessoas usam ao mesmo tempo. Uma chamada só resolve isso na raiz. */
+/* ── Tabelas (Abertas / Andamento / Finalizadas) ── */
+function acoesPcm(o){
+  return `<div class="action-group"><button class="btn-icon" type="button" data-os-print="${o.id_os}" title="Imprimir O.S.">🖨️</button><button class="btn-icon btn-icon-edit" type="button" data-os-edit="${o.id_os}" title="Editar O.S.">✏️</button><button class="btn-icon btn-icon-delete" type="button" data-os-delete="${o.id_os}" title="Excluir O.S.">🗑️</button></div>`;
+}
+function acoesOperadorAbertas(o){
+  return `<div style="display:flex;gap:6px;align-items:center"><button class="action-btn action-start btn-start" data-id="${o.id_os}" type="button">Iniciar</button><button class="action-btn btn-print" data-id="${o.id_os}" type="button" title="Imprimir" aria-label="Imprimir O.S." style="padding:6px 8px;min-width:auto">🖨️</button></div>`;
+}
+function acoesOperadorAndamento(o){
+  return `<div style="display:flex;gap:6px;align-items:center"><button class="action-btn action-finish btn-finish" data-id="${o.id_os}" type="button">Finalizar</button><button class="action-btn btn-print" data-id="${o.id_os}" type="button" title="Imprimir" aria-label="Imprimir O.S." style="padding:6px 8px;min-width:auto">🖨️</button></div>`;
+}
+function acoesOperadorFinalizadas(o){
+  return `<button class="action-btn btn-print" data-id="${o.id_os}" type="button" title="Imprimir" aria-label="Imprimir O.S." style="padding:6px 8px;min-width:auto">🖨️</button>`;
+}
+function renderFinalizadasFiltradas(q){
+  const pcm = isPcmMode();
+  const finalizadas = ordens.filter(o=>o.status==='FINALIZADA');
+  const filtradas = q ? finalizadas.filter(o=>{
+    const texto=[o.data_fim,o.prioridade,String(o.id_os),o.local,o.equipamento,o.componente,o.causa_raiz,o.o_que_feito,o.observacao_fechamento,(o.executores||[]).join(' ')].join(' ').toLowerCase();
+    return texto.includes(q);
+  }) : finalizadas;
+  const totalPages=Math.max(1,Math.ceil(filtradas.length/FINALIZADAS_PER_PAGE));
+  if(finalizadasPage>=totalPages) finalizadasPage=0;
+  const pageSlice=filtradas.slice(finalizadasPage*FINALIZADAS_PER_PAGE,(finalizadasPage+1)*FINALIZADAS_PER_PAGE);
+  tbodyFinalizadas.innerHTML=pageSlice.length?pageSlice.map(o=>`
+    <tr data-id="${o.id_os}" data-obs="${PCMDB.escapeHtml(o.o_que_feito||o.observacao_fechamento||'')}">
+      <td><span class="badge finalizada">FINALIZADA</span></td>
+      <td style="white-space:nowrap">${PCMDB.escapeHtml(o.data_fim||'-')}</td>
+      <td style="white-space:nowrap;color:var(--muted);font-size:12px">${duracaoHHMM(o.data_inicio, o.data_fim)}</td>
+      <td><span class="pill ${PCMDB.priorityClass(o.prioridade)}">${PCMDB.escapeHtml(o.prioridade)}</span></td>
+      <td>${o.id_os}</td>
+      <td>${PCMDB.escapeHtml(o.local)}</td>
+      <td>${PCMDB.escapeHtml(o.equipamento)}</td>
+      <td style="white-space:nowrap;font-size:12px">${PCMDB.escapeHtml(o.tipo_manutencao||'-')}</td>
+      <td>${PCMDB.escapeHtml(o.componente||'-')}</td>
+      <td class="cell-wrap"><span class="wrap-inner">${PCMDB.escapeHtml(o.causa_raiz||'-')}</span></td>
+      <td class="cell-wrap"><span class="wrap-inner">${PCMDB.escapeHtml(o.o_que_feito||o.observacao_fechamento||'-')}</span></td>
+      <td data-mode-only="pcm">${PCMDB.escapeHtml((o.executores||[]).join(' / '))}</td>
+      <td>${PCMDB.escapeHtml(especialidadesFor(o.executores))}</td>
+      <td>${pcm ? acoesPcm(o) : acoesOperadorFinalizadas(o)}</td>
+    </tr>`).join(''):`<tr><td colspan="${pcm?14:13}" class="empty">Nenhuma O.S. encontrada.</td></tr>`;
+  const pag=document.getElementById('finalizadasPagination');
+  buildPagination(finalizadasPage, totalPages, q, filtradas.length, pag, (p)=>{ finalizadasPage=p; renderFinalizadasFiltradas(q); });
+}
+function renderTables(){
+  const abertas = ordens.filter(o=>o.status==='ABERTA');
+  const andamento = ordens.filter(o=>o.status==='ANDAMENTO');
+  const pcm = isPcmMode();
+  tbodyAbertas.innerHTML = abertas.length ? abertas.map(o=>`
+    <tr data-id="${o.id_os}" data-obs="${PCMDB.escapeHtml(o.observacao_abertura || '')}" class="${o.pendente ? 'is-pendente' : ''}">
+      <td>${o.pendente ? '<span class="badge pendente">🔄 PENDENTE</span>' : '<span class="badge aberta">ABERTA</span>'}</td>
+      <td>${PCMDB.escapeHtml(o.data_abertura)}</td>
+      <td><span class="pill ${PCMDB.priorityClass(o.prioridade)}">${PCMDB.escapeHtml(o.prioridade)}</span></td>
+      <td>${o.id_os}</td>
+      <td>${PCMDB.escapeHtml(o.local)}</td>
+      <td>${PCMDB.escapeHtml(o.equipamento)}</td>
+      <td>${PCMDB.escapeHtml(o.tipo_manutencao)}</td>
+      <td>${o.executores?.length ? PCMDB.escapeHtml(o.executores.join(' / ')) : '<span class="muted">— a definir —</span>'}</td>
+      <td>${PCMDB.escapeHtml(especialidadesFor(o.executores))}</td>
+      <td>${PCMDB.escapeHtml(o.solicitante)}</td>
+      <td>${pcm ? acoesPcm(o) : acoesOperadorAbertas(o)}</td>
+    </tr>`).join('') : `<tr><td colspan="11" class="empty">Nenhuma O.S. aberta.</td></tr>`;
+
+  tbodyAndamento.innerHTML = andamento.length ? andamento.map(o=>`
+    <tr data-id="${o.id_os}" data-obs="${PCMDB.escapeHtml(o.observacao_abertura || '')}" class="${o.pendente ? 'is-pendente' : ''}">
+      <td><span class="badge andamento">ANDAMENTO</span></td>
+      <td>${PCMDB.escapeHtml(o.data_inicio)}</td>
+      <td><span class="pill ${PCMDB.priorityClass(o.prioridade)}">${PCMDB.escapeHtml(o.prioridade)}</span></td>
+      <td>${o.id_os}</td>
+      <td>${PCMDB.escapeHtml(o.local)}</td>
+      <td>${PCMDB.escapeHtml(o.equipamento)}</td>
+      <td>${PCMDB.escapeHtml(o.tipo_manutencao)}</td>
+      <td>${PCMDB.escapeHtml((o.executores||[]).join(' / '))}</td>
+      <td>${PCMDB.escapeHtml(especialidadesFor(o.executores))}</td>
+      <td data-mode-only="pcm">${PCMDB.escapeHtml(o.solicitante)}</td>
+      <td>${PCMDB.elapsedHHMM(o.data_inicio)}</td>
+      <td>${pcm ? acoesPcm(o) : acoesOperadorAndamento(o)}</td>
+    </tr>`).join('') : `<tr><td colspan="${pcm?12:11}" class="empty">Nenhuma O.S. em andamento.</td></tr>`;
+
+  tbodyFinalizadas.innerHTML = '';
+  renderFinalizadasFiltradas((searchInput.value||'').trim().toLowerCase());
+  applyFilter();
+}
+/* Atualiza os contadores numéricos nas abas (ex: "Abertas 3") */
+function updateTabBadges(){
+  const counts = {
+    abertas: ordens.filter(o=>o.status==='ABERTA').length,
+    andamento: ordens.filter(o=>o.status==='ANDAMENTO').length,
+    finalizadas: ordens.filter(o=>o.status==='FINALIZADA').length
+  };
+  document.querySelectorAll('[data-count]').forEach(el=>{
+    const total = counts[el.dataset.count] || 0;
+    el.textContent = total;
+    el.classList.toggle('is-hidden', total === 0);
+  });
+}
+/* Busca todas as OS do banco e redesenha a página inteira */
+async function loadAndRender(){ ordens = await PCMDB.getAllOrders(); updateTabBadges(); renderTables(); renderKpis(); }
+
+/* ── Modal Iniciar O.S. (modo Operador) ── */
+function closeConfirm(){
+  confirmBackdrop.classList.remove('is-open');
+  rowToStart=null;
+  document.getElementById('fDataInicio').value='';
+  if(window._pollController) window._pollController.resume();
+}
+function toDatetimeLocalValue(d){ const p=n=>String(n).padStart(2,'0'); return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`; }
+function openConfirm(id){
+  rowToStart = ordens.find(o=>String(o.id_os)===String(id));
+  if(!rowToStart) return;
+  if(window._pollController) window._pollController.pause();
+  document.getElementById('fDataInicio').value = '';
+  document.getElementById('confirmBody').innerHTML = `
+  <div><b>O.S.</b> ${rowToStart.id_os} &nbsp; <b>Prioridade:</b> ${PCMDB.escapeHtml(rowToStart.prioridade)}</div>
+  <div><b>Local:</b> ${PCMDB.escapeHtml(rowToStart.local)}</div>
+  <div><b>Equipamento:</b> ${PCMDB.escapeHtml(rowToStart.equipamento)}</div>
+  <div><b>Tipo:</b> ${PCMDB.escapeHtml(rowToStart.tipo_manutencao)}</div>
+  <div><b>Executores:</b> ${PCMDB.escapeHtml((rowToStart.executores||[]).join(' / '))}</div>
+  <div><b>Solicitante:</b> ${PCMDB.escapeHtml(rowToStart.solicitante)}</div>
+  <div><b>Data/Hora (abertura):</b> ${PCMDB.escapeHtml(rowToStart.data_abertura)}</div>
+  ${rowToStart.observacao_abertura ? `<div><b>Observação:</b><br>${PCMDB.escapeHtml(rowToStart.observacao_abertura)}</div>` : ''}`;
+  confirmBackdrop.classList.add('is-open');
+}
+/* ── Modal Finalizar O.S. (modo Operador) ── */
+function closeCloseModal(){
+  closeBackdrop.classList.remove('is-open');
+  rowToClose=null;
+  document.getElementById('fCausa').value='';
+  document.getElementById('fOQueFeito').value='';
+  document.getElementById('fOQueFalta').value='';
+  document.getElementById('fDataFim').value='';
+  const _dfif = document.getElementById('fDataInicioFim'); if(_dfif) _dfif.value='';
+  document.getElementById('fOQueFaltaWrap').style.display='none';
+  document.getElementById('rConcluido').checked=false;
+  document.getElementById('rPendente').checked=false;
+  document.getElementById('labelConcluido').style.borderColor='var(--field-border)';
+  document.getElementById('labelPendente').style.borderColor='var(--field-border)';
+  ddState.local.value=[]; ddState.local.search='';
+  ddState.equipamento.value=[]; ddState.equipamento.search='';
+  ddState.componente.value=[]; ddState.componente.search='';
+  renderAllDropdowns();
+  if(window._pollController) window._pollController.resume();
+}
+function openCloseModal(id){
+  rowToClose = ordens.find(o=>String(o.id_os)===String(id));
+  if(!rowToClose) return;
+  if(window._pollController) window._pollController.pause();
+  const origemInfo = rowToClose.os_origem ? `<div><b>Continuação da O.S.:</b> #${rowToClose.os_origem}</div>` : '';
+  document.getElementById('closeResumo').innerHTML = `
+    <div><b>O.S.</b> ${rowToClose.id_os} &nbsp; <b>Local:</b> ${PCMDB.escapeHtml(rowToClose.local)}</div>
+    <div><b>Equipamento:</b> ${PCMDB.escapeHtml(rowToClose.equipamento)}</div>
+    <div><b>Início:</b> ${PCMDB.escapeHtml(rowToClose.data_inicio || '-')} &nbsp; <b>Tempo atual:</b> ${PCMDB.elapsedHHMM(rowToClose.data_inicio || '')}</div>
+    ${origemInfo}
+    ${rowToClose.observacao_abertura ? `<div><b>Observação da O.S.:</b><br>${PCMDB.escapeHtml(rowToClose.observacao_abertura)}</div>` : ''}
+    ${rowToClose.o_que_falta ? `<div style="margin-top:4px;padding:8px;border-radius:8px;background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.3)"><b>⚠️ O que faltava do turno anterior:</b><br>${PCMDB.escapeHtml(rowToClose.o_que_falta)}</div>` : ''}`;
+  document.getElementById('fCausa').value = rowToClose.causa_raiz || '';
+  document.getElementById('fOQueFeito').value = '';
+  document.getElementById('fOQueFalta').value = '';
+  document.getElementById('fOQueFaltaWrap').style.display = 'none';
+  document.getElementById('rConcluido').checked = false;
+  document.getElementById('rPendente').checked = false;
+  document.getElementById('labelConcluido').style.borderColor = 'var(--field-border)';
+  document.getElementById('labelPendente').style.borderColor = 'var(--field-border)';
+  ddState.local.value = splitMultiValue(rowToClose.local);
+  ddState.local.search = '';
+  ddState.equipamento.value = splitMultiValue(rowToClose.equipamento);
+  ddState.equipamento.search = '';
+  ddState.componente.value = splitMultiValue(rowToClose.componente);
+  ddState.componente.search = '';
+  renderAllDropdowns();
+  document.getElementById('fDataFim').value = toDatetimeLocalValue(new Date());
+  const dataInicioFimEl = document.getElementById('fDataInicioFim');
+  if(dataInicioFimEl) dataInicioFimEl.value = rowToClose.data_inicio ? (function(){ const d=PCMUtils.parseBR(rowToClose.data_inicio); return d ? toDatetimeLocalValue(d) : ''; })() : '';
+  closeBackdrop.classList.add('is-open');
+}
+
+/* ── Modal Nova/Editar O.S. (modo PCM) ── */
+function closeModal(){
+  modalBackdrop.classList.remove('is-open');
+  editingOrderId = null;
+  document.getElementById('modalTitle').textContent='Nova Ordem de Serviço';
+  document.getElementById('btnSaveOS').textContent='Salvar';
+  document.getElementById('fObs').value='';
+  document.getElementById('fSolicitante').value='';
+  document.getElementById('fCausaRaiz').value='';
+  document.getElementById('fOQueFeitoModal').value='';
+  document.getElementById('fOQueFaltaModal').value='';
+  document.getElementById('fDataAbertura').value='';
+  document.getElementById('fDataInicioModal').value='';
+  document.getElementById('fDataFimModal').value='';
+  document.getElementById('editFinalFields').style.display='none';
+  document.getElementById('editStatusRow').style.display='none';
+  document.getElementById('fStatus').value='ABERTA';
+  resetDropdowns(); renderAllDropdowns(); closeAllDropdowns();
+  if(window._pollController) window._pollController.resume();
+}
+function openModal(){
+  modalBackdrop.classList.add('is-open');
+  closeAllDropdowns();
+  if(window._pollController) window._pollController.pause();
+}
+function brToDatetimeLocal(brStr){
+  if(!brStr) return '';
+  const m = String(brStr).match(/(\d{2})\/(\d{2})\/(\d{4})(?:\s+(\d{2}):(\d{2}))?/);
+  if(!m) return '';
+  const [,dd,mm,yyyy,hh='00',min='00'] = m;
+  return `${yyyy}-${mm}-${dd}T${hh}:${min}`;
+}
+function openEditOrder(id){
+  const ordem = ordens.find(o => String(o.id_os) === String(id));
+  if(!ordem) return;
+  editingOrderId = ordem.id_os;
+  document.getElementById('modalTitle').textContent = `Editar O.S. ${ordem.id_os}`;
+  document.getElementById('btnSaveOS').textContent = 'Salvar edição';
+  ddState.prioridade.value = ordem.prioridade || null;
+  ddState.local.value = splitMultiValue(ordem.local);
+  ddState.equipamento.value = splitMultiValue(ordem.equipamento);
+  ddState.tipo.value = ordem.tipo_manutencao || null;
+  ddState.executores.value = Array.isArray(ordem.executores) ? [...ordem.executores] : [];
+  ddState.componente.value = splitMultiValue(ordem.componente);
+  document.getElementById('fSolicitante').value = ordem.solicitante || '';
+  document.getElementById('fObs').value = ordem.observacao_abertura || '';
+  document.getElementById('fCausaRaiz').value = ordem.causa_raiz || '';
+  document.getElementById('fOQueFeitoModal').value = ordem.o_que_feito || ordem.observacao_fechamento || '';
+  document.getElementById('fOQueFaltaModal').value = ordem.o_que_falta || '';
+  const fStatus = document.getElementById('fStatus');
+  fStatus.value = ordem.status || 'ABERTA';
+  document.getElementById('fDataInicioModal').value = brToDatetimeLocal(ordem.data_inicio);
+  document.getElementById('fDataFimModal').value = brToDatetimeLocal(ordem.data_fim);
+  document.getElementById('editStatusRow').style.display = 'block';
+  document.getElementById('editFinalFields').style.display = (fStatus.value === 'FINALIZADA') ? 'block' : 'none';
+  renderAllDropdowns();
+  openModal();
+}
+document.getElementById('fStatus').addEventListener('change', function(){
+  document.getElementById('editFinalFields').style.display = this.value === 'FINALIZADA' ? 'block' : 'none';
+});
+
+/* ── Gate de senha do modo PCM ── */
+function openPcmPasswordModal(){
+  pcmPasswordInput.value = '';
+  pcmPasswordError.style.display = 'none';
+  pcmPasswordBackdrop.classList.add('is-open');
+  if(window._pollController) window._pollController.pause();
+  setTimeout(()=>pcmPasswordInput.focus(), 50);
+}
+function closePcmPasswordModal(){
+  pcmPasswordBackdrop.classList.remove('is-open');
+  if(window._pollController) window._pollController.resume();
+}
+async function tentarDesbloquearPcm(){
+  const senha = pcmPasswordInput.value || '';
+  const esperada = (window.APP_CONFIG && window.APP_CONFIG.PCM_PASSWORD) || '';
+  if(!esperada || senha !== esperada){
+    pcmPasswordError.style.display = 'block';
+    pcmPasswordInput.focus();
+    return;
+  }
+  setMode('pcm');
+  closePcmPasswordModal();
+  ensureXlsxLoaded().catch(()=>{});
+  renderAllDropdowns();
+  renderCadastros();
+  renderCadastroSearchResults();
+  renderTables();
+  renderKpis();
+}
+function voltarParaOperador(){
+  setMode('operador');
+  renderTables();
+  renderKpis();
+}
+
+/* ── Delegates globais de clique / input / teclado ── */
+document.addEventListener('click', async (e)=>{
+  const box = e.target.closest('[data-dd-box]');
+  const item = e.target.closest('[data-dd-item]');
+  const remove = e.target.closest('[data-dd-remove]');
+  const cadSave = e.target.closest('#btnCadSave');
+  const cadEdit = e.target.closest('[data-cad-edit]');
+  const cadToggle = e.target.closest('[data-cad-toggle]');
+  const cadUpdate = e.target.closest('#btnCadUpdate');
+  const cadCancelEdit = e.target.closest('#btnCadCancelEdit');
+  const osEdit = e.target.closest('[data-os-edit]');
+  const osDelete = e.target.closest('[data-os-delete]');
+  const osPrint = e.target.closest('[data-os-print]');
+  const startBtn = e.target.closest('.btn-start');
+  const finishBtn = e.target.closest('.btn-finish');
+  const printBtn = e.target.closest('.btn-print');
+
+  if(cadSave){ saveListValue(cadTypeSelect.value, cadValueInput.value); return; }
+  if(cadToggle){
+    const key = cadTypeSelect.value;
+    const cfg = cadConfig[key];
+    const value = cadToggle.dataset.cadToggle;
+    const willDeactivate = !isInactive(cfg.listKey, value);
+    const msg = willDeactivate
+      ? `Desativar "${value}"?\n\nO item não aparecerá mais nas caixas de seleção, mas o histórico de O.S. será preservado.`
+      : `Reativar "${value}"?\n\nO item voltará a aparecer nas caixas de seleção.`;
+    if(!askConfirmation(msg)) return;
+    try {
+      inactiveLists = await PCMDB.toggleInactiveItem(cfg.listKey, value);
+      renderAllDropdowns();
+      renderCadastros();
+      renderCadastroSearchResults();
+    } catch(err){ console.error(err); alert('Erro ao atualizar o cadastro: ' + (err?.message || err)); }
+    return;
+  }
+  if(cadEdit){ startCadastroEdit(cadEdit.dataset.cadEdit); return; }
+  if(cadUpdate){ updateCadastroValue(); return; }
+  if(cadCancelEdit){ cancelCadastroEdit(); return; }
+  if(osEdit){
+    const id = osEdit.dataset.osEdit;
+    const ordem = ordens.find(o => String(o.id_os) === String(id));
+    if(!ordem) return;
+    if(!askConfirmation(`Deseja editar a O.S. ${ordem.id_os} — ${ordem.equipamento}?`)) return;
+    openEditOrder(id);
+    return;
+  }
+  if(osDelete){
+    const id = osDelete.dataset.osDelete;
+    const ordem = ordens.find(o => String(o.id_os) === String(id));
+    if(!ordem) return;
+    if(!askConfirmation(`Tem certeza que deseja EXCLUIR permanentemente a O.S. ${ordem.id_os} (${ordem.equipamento})?\n\nEsta ação não pode ser desfeita.`)) return;
+    try {
+      await PCMDB.deleteOrder(id);
+      await loadAndRender();
+    } catch(err){ console.error(err); alert('Erro ao excluir a O.S.: ' + (err?.message || err)); }
+    return;
+  }
+  if(osPrint){
+    const id = osPrint.dataset.osPrint;
+    const ordem = ordens.find(o => String(o.id_os) === String(id));
+    if(!ordem) return;
+    printOrderDetalhado(ordem);
+    return;
+  }
+  if(startBtn){ openConfirm(startBtn.dataset.id); return; }
+  if(finishBtn){ openCloseModal(finishBtn.dataset.id); return; }
+  if(printBtn){ printOrder(printBtn.dataset.id); return; }
+  if(remove){ const key=remove.dataset.ddRemove; ddState[key].value = ddState[key].value.filter(v=>v!==remove.dataset.value); renderDropdown(key); return; }
+  if(item){ const key=item.dataset.ddItem, value=item.dataset.value, cfg=ddState[key]; if(cfg.multiple){ cfg.value = cfg.value.includes(value) ? cfg.value.filter(v=>v!==value) : [...cfg.value, value]; } else { cfg.value=value; document.querySelector(`.dd[data-dd="${key}"]`).dataset.open='0'; } renderDropdown(key); return; }
+  if(box){ const key=box.dataset.ddBox; document.querySelectorAll('.dd').forEach(el=>{ if(el!==box.parentElement) el.dataset.open='0'; }); box.parentElement.dataset.open = box.parentElement.dataset.open==='1'?'0':'1'; renderAllDropdowns(); return; }
+  if(!e.target.closest('.dd')) closeAllDropdowns();
+});
+document.addEventListener('input', (e)=>{
+  const el = e.target;
+  if((el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement)
+    && el.type!=='date' && el.type!=='number' && el.type!=='file' && el.type!=='search' && el.type!=='password'
+    && !el.closest('[data-mode-only="pcm"]')){
+    const start=typeof el.selectionStart==='number'?el.selectionStart:null;
+    const end=typeof el.selectionEnd==='number'?el.selectionEnd:start;
+    const nextValue=String(el.value||'').toUpperCase();
+    if(el.value!==nextValue){
+      el.value=nextValue;
+      if(start!==null && document.activeElement===el){
+        const posStart=Math.min(nextValue.length,start);
+        const posEnd=Math.min(nextValue.length,end ?? start);
+        el.setSelectionRange(posStart,posEnd);
+      }
+    }
+  }
+  if(el===searchInput){ finalizadasPage=0; applyFilter(); }
+  if(el===cadSearchInput) renderCadastroSearchResults();
+  if(el.matches('[data-dd-search]')){
+    const key=el.dataset.ddSearch;
+    const start=typeof el.selectionStart==='number'?el.selectionStart:null;
+    const end=typeof el.selectionEnd==='number'?el.selectionEnd:start;
+    ddState[key].search=el.value;
+    renderDropdown(key);
+    const searchEl=document.querySelector(`.dd[data-dd="${key}"] .dd-search`);
+    if(searchEl){
+      searchEl.focus();
+      if(start!==null){
+        const max=searchEl.value.length;
+        searchEl.setSelectionRange(Math.min(start,max), Math.min(end ?? start,max));
+      }
+    }
+  }
+});
+document.addEventListener('keydown', async (e)=>{
+  if(e.key==='Escape'){ closeConfirm(); closeCloseModal(); closeModal(); closePcmPasswordModal(); closeAllDropdowns(); }
+  if(e.key==='Enter' && e.target===cadValueInput){
+    e.preventDefault();
+    await saveListValue(cadTypeSelect.value, cadValueInput.value);
+  }
+  if(e.key==='Enter' && e.target===pcmPasswordInput){
+    e.preventDefault();
+    await tentarDesbloquearPcm();
+  }
+});
+
+/* ── Wiring de botões estáticos ── */
+document.getElementById('btnThemeToggle').addEventListener('click', toggleTheme);
+tabs.forEach(btn=>btn.addEventListener('click', ()=>showPage(btn.dataset.tab)));
+document.getElementById('btnAcessarPcm').addEventListener('click', openPcmPasswordModal);
+document.getElementById('btnVoltarOperador').addEventListener('click', voltarParaOperador);
+document.getElementById('btnClosePcmPassword').addEventListener('click', closePcmPasswordModal);
+document.getElementById('btnCancelPcmPassword').addEventListener('click', closePcmPasswordModal);
+pcmPasswordBackdrop.addEventListener('click', e=>{ if(e.target===pcmPasswordBackdrop) closePcmPasswordModal(); });
+document.getElementById('btnConfirmPcmPassword').addEventListener('click', tentarDesbloquearPcm);
+
+cadTypeSelect.addEventListener('change', ()=>{ cadSearchInput.value=''; cancelCadastroEdit(); renderCadastros(); renderCadastroSearchResults(); });
+document.getElementById('btnNewOS').addEventListener('click', openModal);
+document.getElementById('btnCloseModal').addEventListener('click', closeModal);
+document.getElementById('btnCancelModal').addEventListener('click', closeModal);
+modalBackdrop.addEventListener('click', e=>{ if(e.target===modalBackdrop) closeModal(); });
+
+document.getElementById('btnCloseConfirm').addEventListener('click', closeConfirm);
+document.getElementById('btnCancelConfirm').addEventListener('click', closeConfirm);
+confirmBackdrop.addEventListener('click', e=>{ if(e.target===confirmBackdrop) closeConfirm(); });
+document.getElementById('btnCloseClose').addEventListener('click', closeCloseModal);
+document.getElementById('btnCancelClose').addEventListener('click', closeCloseModal);
+closeBackdrop.addEventListener('click', e=>{ if(e.target===closeBackdrop) closeCloseModal(); });
+
+document.getElementById('btnConfirmStart').addEventListener('click', async ()=>{ try {
+  if(!rowToStart) return;
+  const dataInicioInput = document.getElementById('fDataInicio').value;
+  if(!dataInicioInput){ alert('Informe a Data/Hora de início.'); return; }
+  let dataInicioManual = '';
+  if(dataInicioInput){
+    const d = new Date(dataInicioInput);
+    const p = n => String(n).padStart(2,'0');
+    dataInicioManual = `${p(d.getDate())}/${p(d.getMonth()+1)}/${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`;
+  }
+  const btn = document.getElementById('btnConfirmStart');
+  btn.disabled = true; btn.textContent = 'Confirmando...';
+  try {
+    await PCMDB.startOrder(rowToStart.id_os, dataInicioManual || undefined);
+    closeConfirm();
+    await loadAndRender();
+    showPage('andamento');
+  } finally { btn.disabled = false; btn.textContent = 'Confirmar início'; }
+} catch(err){ console.error(err); alert('Erro ao iniciar a O.S.: ' + (err?.message || err)); } });
+document.getElementById('btnEncerrar').addEventListener('click', async ()=>{ try {
+  if(!rowToClose) return;
+  const conclusaoEl = document.querySelector('input[name="conclusao"]:checked');
+  const conclusao = conclusaoEl?.value || '';
+  const causa_raiz = document.getElementById('fCausa').value.trim();
+  const o_que_feito = document.getElementById('fOQueFeito').value.trim();
+  const o_que_falta = document.getElementById('fOQueFalta').value.trim();
+  const dataInicioFimInput = document.getElementById('fDataInicioFim').value;
+  let dataInicioFimManual = '';
+  if(dataInicioFimInput){
+    const d = new Date(dataInicioFimInput);
+    const p = n => String(n).padStart(2,'0');
+    dataInicioFimManual = `${p(d.getDate())}/${p(d.getMonth()+1)}/${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`;
+  }
+  const dataFimInput = document.getElementById('fDataFim').value;
+  let dataFimManual = '';
+  if(dataFimInput){
+    const d = new Date(dataFimInput);
+    const p = n => String(n).padStart(2,'0');
+    dataFimManual = `${p(d.getDate())}/${p(d.getMonth()+1)}/${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`;
+  }
+  if(!conclusao){ alert('Indique se o serviço foi concluído ou não.'); return; }
+  if(!dataInicioFimManual){ alert('Informe a Data/Hora de início da execução.'); return; }
+  if(!dataFimManual){ alert('Informe a Data/Hora de finalização.'); return; }
+  if(!o_que_feito){ alert('Informe o que foi feito neste turno.'); return; }
+  if(conclusao === 'nao' && !o_que_falta){ alert('Informe o que falta / próximos passos.'); return; }
+  if(!causa_raiz){ alert('Informe a causa raiz.'); return; }
+  if(!ddState.componente.value.length){ alert('O campo Componente é obrigatório.'); return; }
+  const localFinal = joinMultiValue(ddState.local.value) || rowToClose.local || '';
+  const equipamentoFinal = joinMultiValue(ddState.equipamento.value) || rowToClose.equipamento || '';
+  const componenteFinal = joinMultiValue(ddState.componente.value) || rowToClose.componente || '';
+  rowToClose.local = localFinal;
+  rowToClose.equipamento = equipamentoFinal;
+  rowToClose.componente = componenteFinal;
+  rowToClose.causa_raiz = causa_raiz;
+  rowToClose.o_que_feito = o_que_feito;
+  rowToClose.o_que_falta = conclusao === 'nao' ? o_que_falta : '';
+  await PCMDB.updateOrder(rowToClose, true);
+  await PCMDB.finishOrder(rowToClose.id_os, {
+    causa_raiz,
+    componente: componenteFinal,
+    o_que_feito,
+    o_que_falta: conclusao === 'nao' ? o_que_falta : '',
+    data_inicio: dataInicioFimManual || undefined,
+    data_fim: dataFimManual || undefined
+  });
+  if(conclusao === 'nao'){
+    const novaOS = await PCMDB.addOrder({
+      prioridade: rowToClose.prioridade || 'MEDIA',
+      local: localFinal,
+      equipamento: equipamentoFinal,
+      tipo_manutencao: rowToClose.tipo_manutencao || '',
+      executores: [],
+      solicitante: rowToClose.solicitante || '',
+      observacao_abertura: o_que_falta,
+      os_origem: Number(rowToClose.id_os),
+      pendente: true
+    });
+    if(!novaOS || !novaOS.id_os) throw new Error('A nova O.S. pendente não foi criada.');
+  }
+  closeCloseModal();
+  await loadAndRender();
+  PCMDB.notifyChange();
+  showPage(conclusao === 'nao' ? 'abertas' : 'finalizadas');
+} catch(err){ console.error(err); alert('Erro ao finalizar a O.S.: ' + (err?.message || err)); } });
+document.querySelectorAll('input[name="conclusao"]').forEach(radio => {
+  radio.addEventListener('change', function(){
+    const isPendente = this.value === 'nao';
+    document.getElementById('fOQueFaltaWrap').style.display = isPendente ? 'block' : 'none';
+    document.getElementById('labelConcluido').style.borderColor = !isPendente ? '#16a34a' : 'var(--field-border)';
+    document.getElementById('labelPendente').style.borderColor = isPendente ? '#f59e0b' : 'var(--field-border)';
+  });
+});
+
+document.getElementById('btnExportReport').addEventListener('click', exportSelectedReport);
+document.getElementById('backupFileInput').addEventListener('change', async (e)=>{
+  const file = e.target.files[0]; if(!file) return;
+  try{ const text = await file.text(); await PCMDB.importBackup(JSON.parse(text)); lists = await PCMDB.getLists(); renderAllDropdowns(); renderCadastros(); await loadAndRender(); alert('Backup importado com sucesso.'); }
+  catch(err){ alert(err.message || 'Erro ao importar backup.'); }
+  e.target.value='';
+});
+
+document.getElementById('btnSaveOS').addEventListener('click', async ()=>{
+  const dataAberturaInput = document.getElementById('fDataAbertura').value;
+  let dataAbertura = '';
+  if(dataAberturaInput){
+    const d = new Date(dataAberturaInput);
+    const pad2 = n => String(n).padStart(2,'0');
+    dataAbertura = `${pad2(d.getDate())}/${pad2(d.getMonth()+1)}/${d.getFullYear()} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+  }
+  const payload = {
+    prioridade: ddState.prioridade.value,
+    local: joinMultiValue(ddState.local.value),
+    equipamento: joinMultiValue(ddState.equipamento.value),
+    tipo_manutencao: ddState.tipo.value,
+    executores: ddState.executores.value,
+    solicitante: document.getElementById('fSolicitante').value.trim(),
+    observacao_abertura: document.getElementById('fObs').value.trim(),
+    componente: joinMultiValue(ddState.componente.value),
+    causa_raiz: document.getElementById('fCausaRaiz').value.trim(),
+    o_que_feito: document.getElementById('fOQueFeitoModal').value.trim(),
+    o_que_falta: document.getElementById('fOQueFaltaModal').value.trim(),
+    data_abertura: dataAbertura
+  };
+  function dtLocalToBR(val){
+    if(!val) return '';
+    const d = new Date(val);
+    const p = n => String(n).padStart(2,'0');
+    return `${p(d.getDate())}/${p(d.getMonth()+1)}/${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`;
+  }
+  const dataInicioEdit = dtLocalToBR(document.getElementById('fDataInicioModal').value);
+  const dataFimEdit    = dtLocalToBR(document.getElementById('fDataFimModal').value);
+  if(!payload.prioridade || !payload.local || !payload.equipamento || !payload.tipo_manutencao || !payload.executores.length || !payload.solicitante){ alert('Preencha os campos obrigatórios.'); return; }
+  if(editingOrderId){
+    if(!askConfirmation(`Tem certeza que deseja salvar as alterações da O.S. ${editingOrderId}?`)) return;
+  } else {
+    if(!askConfirmation('Tem certeza que deseja criar esta O.S.?')) return;
+  }
+  const btnSave = document.getElementById('btnSaveOS');
+  const textoOriginal = btnSave.textContent;
+  btnSave.disabled = true; btnSave.textContent = 'Salvando...';
+  try {
+    if(editingOrderId){
+      const ordem = await PCMDB.getOrder(editingOrderId);
+      if(!ordem){ alert('O.S. não encontrada.'); return; }
+      const novoStatus = document.getElementById('fStatus').value;
+      if(novoStatus !== ordem.status){
+        if(novoStatus === 'ANDAMENTO' && !ordem.data_inicio) ordem.data_inicio = PCMDB.nowBR();
+        if(novoStatus === 'FINALIZADA'){
+          if(!ordem.data_inicio) ordem.data_inicio = PCMDB.nowBR();
+          if(!ordem.data_fim) ordem.data_fim = PCMDB.nowBR();
+        }
+        if(novoStatus === 'ABERTA'){ ordem.data_inicio = ''; ordem.data_fim = ''; }
+        ordem.status = novoStatus;
+      }
+      if(dataInicioEdit) ordem.data_inicio = dataInicioEdit;
+      if(dataFimEdit)    ordem.data_fim    = dataFimEdit;
+      ordem.prioridade = payload.prioridade;
+      ordem.local = payload.local;
+      ordem.equipamento = payload.equipamento;
+      ordem.tipo_manutencao = payload.tipo_manutencao;
+      ordem.executores = [...payload.executores];
+      ordem.solicitante = payload.solicitante;
+      ordem.observacao_abertura = payload.observacao_abertura;
+      if(payload.data_abertura) ordem.data_abertura = payload.data_abertura;
+      if(ordem.status === 'FINALIZADA'){
+        ordem.componente = payload.componente || '';
+        ordem.causa_raiz = payload.causa_raiz || '';
+        ordem.o_que_feito = payload.o_que_feito || '';
+        ordem.observacao_fechamento = payload.o_que_feito || '';
+        ordem.o_que_falta = payload.o_que_falta || '';
+      }
+      await PCMDB.updateOrder(ordem);
+    } else {
+      await PCMDB.addOrder(payload);
+    }
+    await loadAndRender();
+    closeModal();
+    showPage('abertas');
+  } catch(err){ console.error(err); alert('Erro ao salvar a O.S.: ' + (err?.message || err)); }
+  finally { btnSave.disabled = false; btnSave.textContent = textoOriginal; }
+});
+
+/* ── Inicialização ── */
 async function fetchAllData(){
   const data = await PCMDB.getInitialData();
   lists = data.lists;
   inactiveLists = data.inactiveLists;
   ordens = data.ordens;
 }
-/* Mostra um aviso no topo da tela. Sem isso, uma falha de comunicação deixava a
-   página em branco sem explicação nenhuma para quem está usando. */
 function mostrarAvisoCarregamento(mensagem, tipo){
   let box = document.getElementById('avisoCarregamento');
   if(!box){
@@ -1934,26 +2285,27 @@ function esconderAvisoCarregamento(){
 }
 (async function init(){
   applyTheme(readStoredTheme());
+  document.title = isPcmMode() ? 'PCM - Ordens de Serviço' : 'Operador - Ordens de Serviço';
   mostrarAvisoCarregamento('Carregando dados do servidor... Isso pode levar alguns segundos.', 'info');
   try {
     await fetchAllData();
     esconderAvisoCarregamento();
   } catch(err){
     mostrarAvisoCarregamento(`Não foi possível carregar os dados: ${err.message} — recarregue a página (Ctrl+F5) para tentar de novo.`, 'erro');
-    return; /* sem dados não há o que renderizar; o aviso fica visível na tela */
+    return;
   }
   renderAllDropdowns();
   renderCadastros();
   renderCadastroSearchResults();
   updateTabBadges();
-  renderTable();
+  renderTables();
   renderKpis();
+  if(isPcmMode()) ensureXlsxLoaded().catch(()=>{});
   window._pollController = PCMDB.subscribeChanges(async ()=>{
     try {
       await fetchAllData();
       esconderAvisoCarregamento();
     } catch(err){
-      /* Falha no polling não apaga o que já está na tela — só avisa. */
       mostrarAvisoCarregamento(`Falha ao atualizar os dados: ${err.message} — os dados exibidos podem estar desatualizados.`, 'erro');
       return;
     }
@@ -1961,12 +2313,11 @@ function esconderAvisoCarregamento(){
     renderCadastros();
     renderCadastroSearchResults();
     updateTabBadges();
-    renderTable();
+    renderTables();
     renderKpis();
   });
 })();
 
-/* Ajusta a altura máxima das tabelas dinamicamente para não ultrapassar a tela */
 function ajustarAlturaTabelas(){
   const tableWraps = document.querySelectorAll('.table-wrap');
   tableWraps.forEach(wrap => {

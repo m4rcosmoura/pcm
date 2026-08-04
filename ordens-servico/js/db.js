@@ -59,6 +59,11 @@ function requireConfig(){
 */
 const MAX_TENTATIVAS    = 3;
 const ESPERA_INICIAL_MS = 1200;
+/* Timeout por tentativa: sem isso, uma chamada "pendurada" (o Apps Script não responde
+   nem dá erro, só nunca retorna) travava a fila inteira pra sempre — "pendurado" não é
+   erro, então o retry nunca disparava. Medido em produção: já vi chamadas passarem de
+   20s sem nenhuma resposta. */
+const TIMEOUT_POR_TENTATIVA_MS = 20000;
 
 function espera(ms){ return new Promise(r => setTimeout(r, ms)); }
 
@@ -68,13 +73,16 @@ let filaDeChamadas = Promise.resolve();
 async function chamadaComRetry(action, payload){
   let ultimoErro;
   for(let tentativa = 1; tentativa <= MAX_TENTATIVAS; tentativa++){
+    const controle = new AbortController();
+    const timer = setTimeout(() => controle.abort(), TIMEOUT_POR_TENTATIVA_MS);
     try {
       let res;
       if(payload === null){
         /* Leitura: usa GET com parâmetro action */
         res = await fetch(`${GS_URL}?action=${encodeURIComponent(action)}`, {
           method: 'GET',
-          redirect: 'follow'
+          redirect: 'follow',
+          signal: controle.signal
         });
       } else {
         /* Escrita: usa POST com JSON */
@@ -82,11 +90,13 @@ async function chamadaComRetry(action, payload){
           method: 'POST',
           redirect: 'follow',
           headers: { 'Content-Type': 'text/plain' }, /* text/plain evita preflight CORS */
-          body: JSON.stringify({ action, ...payload })
+          body: JSON.stringify({ action, ...payload }),
+          signal: controle.signal
         });
       }
 
       const text = await res.text();
+      clearTimeout(timer);
 
       /* Resposta HTML = página de erro do Google, não os dados. Vale repetir. */
       if(text.trim().startsWith('<')){
@@ -101,7 +111,10 @@ async function chamadaComRetry(action, payload){
       return data.data;
 
     } catch(err){
-      ultimoErro = err;
+      clearTimeout(timer);
+      ultimoErro = err?.name === 'AbortError'
+        ? new Error(`O servidor não respondeu em ${TIMEOUT_POR_TENTATIVA_MS/1000}s (chamada pendurada).`)
+        : err;
       /* Espera crescente entre tentativas: 1,2s, depois 2,4s */
       if(tentativa < MAX_TENTATIVAS) await espera(ESPERA_INICIAL_MS * tentativa);
     }
@@ -351,17 +364,34 @@ function notifyChange(){
 }
 
 function onExternalChange(cb){
+  /*
+    Duas razões independentes para pausar o poll: um modal de edição aberto
+    (_modalPaused, controlado pelos HTMLs via pause()/resume()) e a aba estar
+    em segundo plano (_hidden, controlado aqui). Só reativa quando NENHUMA
+    das duas estiver ativa — sem isso, uma aba esquecida aberta bate no
+    Apps Script a cada 30s o dia inteiro, mesmo sem ninguém olhando.
+  */
   const ctrl = {
-    _paused: false,
-    pause(){  this._paused = true;  },
-    resume(){ this._paused = false; }
+    _modalPaused: false,
+    _hidden: typeof document !== 'undefined' && document.visibilityState === 'hidden',
+    pause(){  this._modalPaused = true;  },
+    resume(){ this._modalPaused = false; }
   };
+  const deveIgnorar = () => ctrl._modalPaused || ctrl._hidden;
   if(channel){
     channel.onmessage = (event) => {
-      if(event?.data?.type === 'changed' && !ctrl._paused) cb?.();
+      if(event?.data?.type === 'changed' && !deveIgnorar()) cb?.();
     };
   }
-  setInterval(() => { if(!ctrl._paused) cb?.(); }, POLL_INTERVAL_MS);
+  setInterval(() => { if(!deveIgnorar()) cb?.(); }, POLL_INTERVAL_MS);
+  if(typeof document !== 'undefined'){
+    document.addEventListener('visibilitychange', () => {
+      const estavaOculta = ctrl._hidden;
+      ctrl._hidden = document.visibilityState === 'hidden';
+      /* Ao voltar a ficar visível, busca na hora em vez de esperar o próximo tick de 30s */
+      if(estavaOculta && !ctrl._hidden && !ctrl._modalPaused) cb?.();
+    });
+  }
   return ctrl;
 }
 

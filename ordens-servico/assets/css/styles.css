@@ -154,6 +154,10 @@ body>*{position:relative;z-index:1}
 }
 .tab-badge.is-hidden{display:none}
 
+/* ── Modo (Operador / PCM) ── */
+:root[data-mode="operador"] [data-mode-only="pcm"]{display:none!important}
+:root[data-mode="pcm"] [data-mode-only="operador"]{display:none!important}
+
 /* ── Páginas ── */
 .page{display:none}.page.is-visible{display:block}
 
