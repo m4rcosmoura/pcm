@@ -1,3 +1,2 @@
-PCM Ordens de Serviço — estabilidade e correção dos dropdowns
-Data: 04/08/2026
-Versão: 2.0.1-estavel
+2.0.2
+Correção de timeout no getInitialData, remoção de lock/cache grande na leitura e rota de contingência.

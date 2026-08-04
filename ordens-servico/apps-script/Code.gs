@@ -19,9 +19,11 @@
  * funcionando (usadas em outros pontos do app que só precisam atualizar
  * uma coisa por vez).
  *
- * ATUALIZAÇÃO 2: cache (CacheService) no getInitialData_ + LockService nas
- * escritas que ainda não tinham. Ver comentários abaixo, na seção "CACHE" e
- * nas funções addOrder_/updateOrder_/deleteOrder_/importOrdens_.
+ * ATUALIZAÇÃO 2.0.2: removido o cache grande e o LockService da leitura
+ * getInitialData_. A combinação lock de 15s + timeout de 20s no navegador podia
+ * deixar apenas 5s para ler e serializar os dados; sob concorrência, a chamada
+ * expirava e as tentativas seguintes aumentavam a fila. A versão dos dados
+ * continua em PropertiesService e as escritas permanecem protegidas por lock.
  * ─────────────────────────────────────────
  */
 
@@ -46,6 +48,7 @@ function doGet(e){
     if(action === 'init')             data = init_();
     else if(action === 'getInitialData') data = getInitialData_();
     else if(action === 'getVersion')     data = getDataVersion_();
+    else if(action === 'health')         data = health_();
     else if(action.startsWith('getMeta'))   data = getMeta_(e.parameter.id);
     else if(action === 'getLists')    data = getLists_();
     else if(action === 'getInactiveLists') data = getInactiveLists_();
@@ -68,6 +71,7 @@ function doPost(e){
     if     (action === 'init')           data = init_();
     else if(action === 'getInitialData') data = getInitialData_();
     else if(action === 'getVersion')     data = getDataVersion_();
+    else if(action === 'health')         data = health_();
     else if(action === 'upsertMeta')     data = upsertMeta_(body.record);
     else if(action === 'setLists')       data = setLists_(body.lists);
     else if(action === 'setInactiveLists') data = setInactiveLists_(body.inactive);
@@ -127,17 +131,15 @@ function init_(){
 }
 
 /*
-  ── CACHE de getInitialData_ ──
-  O CacheService do Apps Script só aceita até 100KB por chave, e o conjunto
-  de dados hoje passa de 700KB — por isso o JSON é dividido em pedaços
-  ("chunks") menores e remontado na leitura. Guardamos por CACHE_TTL_SECONDS
-  como rede de segurança, mas a atualização real acontece por INVALIDAÇÃO:
-  toda escrita (criar/editar/excluir OS, mudar cadastros) limpa o cache na
-  hora — então ninguém fica vendo dado desatualizado por causa do cache, só
-  evitamos reler a planilha inteira quando NADA mudou (o caso mais comum,
-  já que o front-end faz poll a cada 30s mesmo sem nenhuma alteração).
-  Qualquer falha no cache (limite excedido, erro do serviço, etc.) cai de
-  volta pra ler a planilha normalmente — nunca impede o carregamento.
+  ── VERSÃO E CARREGAMENTO CONSOLIDADO ──
+
+  O navegador consulta getVersion a cada 30 segundos. O conjunto completo só é
+  baixado quando a versão muda. Por isso, manter uma cópia de ~700 KB dividida em
+  dezenas de chaves do CacheService trazia mais custo e contenção do que benefício.
+
+  IMPORTANTE: getInitialData_ não usa ScriptLock. Leitura não altera dados e não
+  deve esperar atrás de gravações por até 15 segundos. Os locks continuam apenas
+  nas operações de escrita, onde são realmente necessários.
 */
 const DATA_VERSION_KEY = 'pcm_data_version_v2';
 
@@ -157,98 +159,56 @@ function bumpDataVersion_(){
   return version;
 }
 
-/* A versão muda somente depois que o cache antigo foi removido. */
 function markInitialDataChanged_(){
-  invalidateInitialDataCache_();
   return bumpDataVersion_();
 }
 
-const CACHE_PREFIX       = 'initial_data_v2_chunk_';
-const CACHE_META_KEY     = 'initial_data_v2_meta';
-const CACHE_TTL_SECONDS  = 600;
-const CACHE_CHUNK_SIZE   = 20000; /* caracteres por pedaço — margem segura abaixo do limite de 100KB (bytes) do CacheService */
+/* Diagnóstico rápido: não toca na planilha. */
+function health_(){
+  return {
+    status: 'ok',
+    version: getDataVersion_(),
+    serverTime: new Date().toISOString()
+  };
+}
 
-function readInitialDataCache_(){
-  try {
-    const cache = CacheService.getScriptCache();
-    const metaRaw = cache.get(CACHE_META_KEY);
-    if(!metaRaw) return null;
-    const meta = JSON.parse(metaRaw);
-    let json = '';
-    for(let i = 0; i < meta.chunks; i++){
-      const part = cache.get(CACHE_PREFIX + i);
-      if(part == null) return null; /* pedaço expirou/faltando — trata como cache-miss */
-      json += part;
+/* Lê a aba de listas uma única vez e extrai os dois registros. */
+function getListsBundle_(){
+  const sh = shListas_();
+  const rows = sh.getDataRange().getValues();
+  let lists = null;
+  let inactiveLists = null;
+
+  for(let i = 1; i < rows.length; i++){
+    const id = String(rows[i][0] || '');
+    if(id !== 'default' && id !== 'inactive') continue;
+    try {
+      const parsed = rows[i][1] ? JSON.parse(rows[i][1]) : null;
+      if(id === 'default') lists = parsed;
+      else inactiveLists = parsed;
+    } catch(err){
+      throw new Error('JSON inválido na aba listas, registro "' + id + '": ' + err.message);
     }
-    return JSON.parse(json);
-  } catch(e){
-    return null;
   }
+  return { lists, inactiveLists };
 }
 
-function writeInitialDataCache_(data){
-  try {
-    const json = JSON.stringify(data);
-    const cache = CacheService.getScriptCache();
-    const chunks = {};
-    let count = 0;
-    for(let i = 0; i < json.length; i += CACHE_CHUNK_SIZE){
-      chunks[CACHE_PREFIX + count] = json.slice(i, i + CACHE_CHUNK_SIZE);
-      count++;
-    }
-    cache.putAll(chunks, CACHE_TTL_SECONDS);
-    /* meta é escrito por último — funciona como "commit": se alguém ler o cache
-       entre os chunks serem gravados e o meta ser gravado, encontra cache-miss
-       (comportamento seguro) em vez de dados parciais. */
-    cache.put(CACHE_META_KEY, JSON.stringify({ chunks: count }), CACHE_TTL_SECONDS);
-  } catch(e){
-    /* Se o cache falhar por qualquer motivo, apenas ignora — não deve derrubar o carregamento normal */
-  }
-}
-
-function invalidateInitialDataCache_(){
-  try {
-    const cache = CacheService.getScriptCache();
-    const metaRaw = cache.get(CACHE_META_KEY);
-    if(metaRaw){
-      const meta = JSON.parse(metaRaw);
-      for(let i = 0; i < meta.chunks; i++) cache.remove(CACHE_PREFIX + i);
-    }
-    cache.remove(CACHE_META_KEY);
-  } catch(e){}
-}
-
-/*
-  Devolve init + listas + inativos + ordens numa única execução.
-  Substitui, no carregamento da página e no poll, as 4 chamadas separadas
-  (init, getLists, getInactiveLists, getAllOrders) por 1 só — reduz o número
-  de execuções simultâneas no Apps Script quando várias pessoas usam o
-  sistema ao mesmo tempo. Agora também passa pelo cache acima antes de
-  tocar a planilha.
-*/
 function getInitialData_(){
-  init_();
-  const cached = readInitialDataCache_();
-  if(cached) return cached;
-
-  /* Evita que vários usuários reconstruam o mesmo cache ao mesmo tempo. */
-  const lock = LockService.getScriptLock();
-  lock.waitLock(15000);
-  try {
-    const cachedAfterLock = readInitialDataCache_();
-    if(cachedAfterLock) return cachedAfterLock;
-
-    const data = {
-      version:       getDataVersion_(),
-      lists:         getLists_(),
-      inactiveLists: getInactiveLists_(),
-      ordens:        getAllOrders_()
-    };
-    writeInitialDataCache_(data);
-    return data;
-  } finally {
-    lock.releaseLock();
-  }
+  const started = Date.now();
+  const bundle = getListsBundle_();
+  const ordens = getAllOrders_();
+  const data = {
+    version: getDataVersion_(),
+    lists: bundle.lists,
+    inactiveLists: bundle.inactiveLists,
+    ordens: ordens
+  };
+  console.log(JSON.stringify({
+    action: 'getInitialData',
+    durationMs: Date.now() - started,
+    orderCount: ordens.length
+  }));
+  return data;
 }
 
 /* ── Meta ── */

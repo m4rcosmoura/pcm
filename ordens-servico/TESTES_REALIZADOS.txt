@@ -1,7 +1,12 @@
-Validações executadas antes do empacotamento:
+Versão 2.0.2
 
-- Sintaxe do js/db.js: OK
-- Sintaxe do apps-script/Code.gs: OK
-- Sintaxe dos scripts internos dos 4 arquivos HTML: OK
-- Teste simulado do frontend: getInitialData, getVersion, getOrder e cache local: OK
-- Teste simulado do backend: getVersion, getInitialData, addOrder, mudança de versão e recarga: OK
+1. Sintaxe de js/db.js validada com Node.js.
+2. Sintaxe de apps-script/Code.gs validada com Node.js.
+3. Teste simulado do fallback: getInitialData falha e o sistema recupera listas, inativos e ordens por chamadas separadas.
+4. Teste simulado confirmou que addOrder não é repetido automaticamente após falha.
+5. Teste simulado confirmou leitura e gravação do cache local.
+6. Teste simulado do backend confirmou que getInitialData não usa LockService.
+7. Teste simulado confirmou uma única leitura da aba listas e uma única leitura da aba ordens.
+8. Teste simulado confirmou a ação health.
+
+Limitação: o endpoint real do Google Apps Script não pôde ser acessado deste ambiente. A implantação deve ser validada no navegador do usuário.

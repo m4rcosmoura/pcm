@@ -62,3 +62,13 @@ Todas as mudanças relevantes do projeto são registradas aqui.
 - KPIs: Top 10 locais, equipamentos, operador × atendimentos, homem × hora, MTTR
 - MTTR Geral formatado como `Xh YYmin`
 - Card de Pendentes removido dos KPIs
+
+## 2.0.2 — 2026-08-04
+
+- Removido `ScriptLock` da leitura `getInitialData_`.
+- Removido cache de aproximadamente 700 KB em dezenas de chaves do CacheService.
+- Leitura de listas consolidada em um único `getDataRange().getValues()`.
+- Adicionada ação de diagnóstico `health`.
+- `getInitialData` passa a fazer uma tentativa de 30 segundos, sem criar três execuções órfãs no servidor.
+- Adicionada rota de contingência por `getLists`, `getInactiveLists` e `getAllOrders`.
+- Escritas deixaram de ser repetidas automaticamente, evitando possível duplicação de OS.

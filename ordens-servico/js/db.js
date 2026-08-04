@@ -20,11 +20,7 @@ const STRUCTURE_TAG = 'base_google_sheets_v2';
 /* Última cópia válida dos dados, usada quando o Google fica temporariamente indisponível. */
 const LOCAL_INITIAL_DATA_KEY = 'pcm_initial_data_cache_v2';
 
-/* Intervalo de polling: a cada 5 segundos busca atualizações do banco */
-/* 30s em vez de 5s: a cada poll o app faz 3 chamadas ao Apps Script (getLists,
-   getInactiveLists, getAllOrders). Com várias abas abertas ao mesmo tempo, um
-   intervalo curto empilha muitas requisições simultâneas contra o limite de
-   execuções concorrentes do Apps Script, o que pode travar/enfileirar chamadas. */
+/* A cada 30s consulta apenas getVersion; o banco completo só é baixado se mudou. */
 const POLL_INTERVAL_MS = 30000;
 
 /*
@@ -56,17 +52,31 @@ function requireConfig(){
   PÁGINA HTML DE ERRO do Google ("Não foi possível abrir o arquivo") em vez do JSON
   esperado — principalmente quando há chamadas simultâneas. Antes isso derrubava o
   carregamento em silêncio: a tela ficava vazia, sem nenhuma mensagem. Agora:
-    1. Chamadas são SERIALIZADAS (uma de cada vez) para não competirem entre si;
-    2. Falhas são REPETIDAS automaticamente (3 tentativas, com espera crescente);
-    3. Se todas falharem, o erro sobe com mensagem clara em vez de tela vazia.
+    1. Chamadas são serializadas para não competirem entre si;
+    2. Leituras usam política de repetição adequada a cada ação;
+    3. Escritas não são repetidas automaticamente, evitando duplicidades;
+    4. Se o carregamento consolidado falhar, existe uma rota de contingência.
 */
-const MAX_TENTATIVAS    = 3;
 const ESPERA_INICIAL_MS = 1200;
-/* Timeout por tentativa: sem isso, uma chamada "pendurada" (o Apps Script não responde
-   nem dá erro, só nunca retorna) travava a fila inteira pra sempre — "pendurado" não é
-   erro, então o retry nunca disparava. Medido em produção: já vi chamadas passarem de
-   20s sem nenhuma resposta. */
-const TIMEOUT_POR_TENTATIVA_MS = 20000;
+
+/*
+  Leituras podem ser repetidas com segurança. Escritas NÃO são repetidas
+  automaticamente: se o servidor salvar e a resposta se perder, repetir addOrder
+  pode criar uma OS duplicada. O próximo carregamento confirma o resultado.
+*/
+const READ_ACTIONS = new Set([
+  'init','getInitialData','getVersion','health','getMeta','getLists',
+  'getInactiveLists','getAllOrders','getOrder'
+]);
+
+function requestPolicy(action){
+  if(action === 'getInitialData') return { maxTentativas: 1, timeoutMs: 30000 };
+  if(action === 'getAllOrders')   return { maxTentativas: 2, timeoutMs: 30000 };
+  if(action === 'getVersion' || action === 'health')
+    return { maxTentativas: 2, timeoutMs: 12000 };
+  if(READ_ACTIONS.has(action)) return { maxTentativas: 2, timeoutMs: 20000 };
+  return { maxTentativas: 1, timeoutMs: 30000 };
+}
 
 function espera(ms){ return new Promise(r => setTimeout(r, ms)); }
 
@@ -74,25 +84,27 @@ function espera(ms){ return new Promise(r => setTimeout(r, ms)); }
 let filaDeChamadas = Promise.resolve();
 
 async function chamadaComRetry(action, payload){
+  const policy = requestPolicy(action);
   let ultimoErro;
-  for(let tentativa = 1; tentativa <= MAX_TENTATIVAS; tentativa++){
+
+  for(let tentativa = 1; tentativa <= policy.maxTentativas; tentativa++){
     const controle = new AbortController();
-    const timer = setTimeout(() => controle.abort(), TIMEOUT_POR_TENTATIVA_MS);
+    const timer = setTimeout(() => controle.abort(), policy.timeoutMs);
     try {
       let res;
       if(payload === null){
-        /* Leitura: usa GET com parâmetro action */
         res = await fetch(`${GS_URL}?action=${encodeURIComponent(action)}`, {
           method: 'GET',
           redirect: 'follow',
+          cache: 'no-store',
           signal: controle.signal
         });
       } else {
-        /* Escrita: usa POST com JSON */
         res = await fetch(GS_URL, {
           method: 'POST',
           redirect: 'follow',
-          headers: { 'Content-Type': 'text/plain' }, /* text/plain evita preflight CORS */
+          cache: 'no-store',
+          headers: { 'Content-Type': 'text/plain' },
           body: JSON.stringify({ action, ...payload }),
           signal: controle.signal
         });
@@ -101,9 +113,8 @@ async function chamadaComRetry(action, payload){
       const text = await res.text();
       clearTimeout(timer);
 
-      /* Resposta HTML = página de erro do Google, não os dados. Vale repetir. */
       if(text.trim().startsWith('<')){
-        throw new Error('O Google devolveu uma página de erro em vez dos dados (serviço instável ou sobrecarregado).');
+        throw new Error('O Google devolveu uma página de erro em vez dos dados.');
       }
 
       let data;
@@ -116,18 +127,23 @@ async function chamadaComRetry(action, payload){
     } catch(err){
       clearTimeout(timer);
       ultimoErro = err?.name === 'AbortError'
-        ? new Error(`O servidor não respondeu em ${TIMEOUT_POR_TENTATIVA_MS/1000}s (chamada pendurada).`)
+        ? new Error(`O servidor não respondeu em ${policy.timeoutMs/1000}s.`)
         : err;
-      /* Espera crescente entre tentativas: 1,2s, depois 2,4s */
-      if(tentativa < MAX_TENTATIVAS) await espera(ESPERA_INICIAL_MS * tentativa);
+      if(tentativa < policy.maxTentativas){
+        await espera(ESPERA_INICIAL_MS * tentativa);
+      }
     }
   }
-  throw new Error(`Falha ao comunicar com o servidor na ação "${action}" após ${MAX_TENTATIVAS} tentativas. ${ultimoErro?.message || ''}`.trim());
+
+  const tentativas = policy.maxTentativas;
+  throw new Error(
+    `Falha ao comunicar com o servidor na ação "${action}" após ${tentativas} ` +
+    `${tentativas === 1 ? 'tentativa' : 'tentativas'}. ${ultimoErro?.message || ''}`
+  );
 }
 
 function call(action, payload = null){
   requireConfig();
-  /* Encadeia na fila — o catch vazio evita que uma falha trave as chamadas seguintes. */
   const resultado = filaDeChamadas.then(
     () => chamadaComRetry(action, payload),
     () => chamadaComRetry(action, payload)
@@ -229,18 +245,44 @@ async function getInactiveLists(){
   os outros pontos do app que só precisam atualizar uma coisa por vez.
 */
 async function getInitialData(){
-  const data = await call('getInitialData');
-  return {
-    version:       String(data?.version ?? ''),
-    lists:         structured(data?.lists || DEFAULT_LISTS),
-    inactiveLists: structured(data?.inactiveLists || DEFAULT_INACTIVE),
-    ordens:        Array.isArray(data?.ordens) ? data.ordens : []
-  };
+  try {
+    const data = await call('getInitialData');
+    return {
+      version:       String(data?.version ?? ''),
+      lists:         structured(data?.lists || DEFAULT_LISTS),
+      inactiveLists: structured(data?.inactiveLists || DEFAULT_INACTIVE),
+      ordens:        Array.isArray(data?.ordens) ? data.ordens : []
+    };
+  } catch(primaryError){
+    /*
+      Rota de contingência: versões antigas do backend podiam travar dentro do
+      getInitialData por causa do lock/cache grande. As leituras separadas não
+      usam esse lock e permitem recuperar o sistema enquanto a implantação nova
+      ainda não chegou a todos os acessos.
+    */
+    console.warn('getInitialData falhou; tentando leituras separadas:', primaryError);
+    let version = '';
+    try { version = String((await call('getVersion')) ?? ''); } catch(_) {}
+
+    const lists = await call('getLists');
+    const inactiveLists = await call('getInactiveLists');
+    const ordens = await call('getAllOrders');
+    return {
+      version,
+      lists:         structured(lists || DEFAULT_LISTS),
+      inactiveLists: structured(inactiveLists || DEFAULT_INACTIVE),
+      ordens:        Array.isArray(ordens) ? ordens : []
+    };
+  }
 }
 
 /* Consulta muito pequena: evita baixar novamente todo o banco quando nada mudou. */
 async function getDataVersion(){
   return String((await call('getVersion')) ?? '');
+}
+
+async function healthCheck(){
+  return call('health');
 }
 
 function saveCachedInitialData(data){
@@ -457,7 +499,7 @@ function onExternalChange(cb){
 /* ── API pública — idêntica ao db.js original ── */
 
 window.PCMDB = {
-  initDB, getInitialData, getDataVersion,
+  initDB, getInitialData, getDataVersion, healthCheck,
   saveCachedInitialData, getCachedInitialData,
   getLists, setLists,
   getInactiveLists, setInactiveLists, toggleInactiveItem,
