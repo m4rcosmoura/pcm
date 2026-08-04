@@ -41,7 +41,7 @@
     <button id="btnVoltarOperador" class="btn btn-secondary" type="button" data-mode-only="pcm">🔓 Voltar para Operador</button>
     <button id="btnThemeToggle" class="btn btn-secondary theme-toggle" type="button" aria-pressed="false">🌙 Tema escuro</button>
     <input id="backupFileInput" type="file" accept=".json,application/json" hidden>
-    <input id="searchInput" class="search" type="search" placeholder="Buscar na aba atual...">
+    <input id="searchInput" class="search" type="search" placeholder="Buscar na aba atual..." autocomplete="off">
   </div>
 
   <div class="tabs">
@@ -2285,6 +2285,7 @@ function esconderAvisoCarregamento(){
 }
 (async function init(){
   applyTheme(readStoredTheme());
+  searchInput.value = ""; /* alguns navegadores restauram o valor antigo do campo de busca ao recarregar a página — força ficar vazio no carregamento */
   document.title = isPcmMode() ? 'PCM - Ordens de Serviço' : 'Operador - Ordens de Serviço';
   mostrarAvisoCarregamento('Carregando dados do servidor... Isso pode levar alguns segundos.', 'info');
   try {
