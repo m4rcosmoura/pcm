@@ -1,16 +1,14 @@
 /* ─────────────────────────────────────────
-   config.js — credenciais da aplicação
-   Este arquivo está no .gitignore.
-   NÃO envie para o repositório.
+   config.js — configuração pública do site
+
+   A Publishable Key do Supabase pode ficar no navegador, desde que as tabelas
+   estejam protegidas por RLS. Nunca coloque service_role ou secret key aqui.
 ───────────────────────────────────────── */
 window.APP_CONFIG = {
-  /* Cole aqui a URL do seu Web App gerada no Apps Script
-     Menu: Implantar → Gerenciar implantações → copiar a URL */
-  GS_URL: "https://script.google.com/macros/s/AKfycbxj-SQ6FLbbO7KiH-S5jIXE5a0UYMbq8_R14mg4MaWP_YGXkHLZk7H50bP2Hc3jhYmeCw/exec",
-  /* Senha para acessar o modo PCM a partir da tela do Operador.
-     Isto é só uma trava de organização de fluxo, NÃO é segurança real —
-     qualquer pessoa com acesso ao código-fonte ou ao console do navegador
-     consegue ver este valor ou chamar as funções do PCMDB diretamente.
-     Troque para o que preferir. */
-  PCM_PASSWORD: "troque-esta-senha"
+  SUPABASE_URL: 'https://jrpdxvmikxhupculeyyy.supabase.co',
+  SUPABASE_PUBLISHABLE_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpycGR4dm1pa3hodXBjdWxleXl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU5MjA5MjAsImV4cCI6MjEwMTQ5NjkyMH0.uTIniG9luPghcVKKuelSkyrJaY2k0S0sUy4uRbakU78',
+
+  /* Mantido para a separação visual entre Operador e PCM.
+     Não substitui o login nem as políticas RLS do Supabase. */
+  PCM_PASSWORD: 'troque-esta-senha'
 };
