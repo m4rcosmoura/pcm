@@ -12,6 +12,12 @@
 <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Poppins:wght@600;700;900&display=swap" rel="stylesheet">
 
 <link rel="stylesheet" href="./assets/css/styles.css">
+<style>
+/* Campos de autenticação devem preservar a capitalização digitada. */
+input[type="email"] {
+  text-transform: none !important;
+}
+</style>
 <script src="./config/config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="./js/utils.js"></script>
@@ -41,8 +47,22 @@
     <button id="btnAcessarPcm" class="btn btn-secondary" type="button" data-mode-only="operador">🔒 Acessar PCM</button>
     <button id="btnVoltarOperador" class="btn btn-secondary" type="button" data-mode-only="pcm">🔓 Voltar para Operador</button>
     <button id="btnThemeToggle" class="btn btn-secondary theme-toggle" type="button" aria-pressed="false">🌙 Tema escuro</button>
-    <input id="backupFileInput" type="file" accept=".json,application/json" hidden>
-    <input id="searchInput" class="search" type="search" placeholder="Buscar na aba atual..." autocomplete="off">
+    <input
+      id="searchInput"
+      class="search"
+      type="search"
+      name="pcm_filtro_ordens_servico"
+      placeholder="Buscar na aba atual..."
+      autocomplete="off"
+      autocapitalize="none"
+      spellcheck="false"
+      enterkeyhint="search"
+      data-lpignore="true"
+      data-1p-ignore="true"
+      readonly
+      onfocus="this.removeAttribute('readonly')"
+      onpointerdown="this.removeAttribute('readonly')"
+    >
   </div>
 
   <div class="tabs">
@@ -2016,7 +2036,7 @@ document.addEventListener('click', async (e)=>{
 document.addEventListener('input', (e)=>{
   const el = e.target;
   if((el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement)
-    && el.type!=='date' && el.type!=='number' && el.type!=='file' && el.type!=='search' && el.type!=='password'
+    && el.type!=='date' && el.type!=='number' && el.type!=='file' && el.type!=='search' && el.type!=='email' && el.type!=='password'
     && !el.closest('[data-mode-only="pcm"]')){
     const start=typeof el.selectionStart==='number'?el.selectionStart:null;
     const end=typeof el.selectionEnd==='number'?el.selectionEnd:start;
@@ -2179,13 +2199,6 @@ document.querySelectorAll('input[name="conclusao"]').forEach(radio => {
 });
 
 document.getElementById('btnExportReport').addEventListener('click', exportSelectedReport);
-document.getElementById('backupFileInput').addEventListener('change', async (e)=>{
-  const file = e.target.files[0]; if(!file) return;
-  try{ const text = await file.text(); await PCMDB.importBackup(JSON.parse(text)); lists = await PCMDB.getLists(); renderAllDropdowns(); renderCadastros(); await loadAndRender(); alert('Backup importado com sucesso.'); }
-  catch(err){ alert(err.message || 'Erro ao importar backup.'); }
-  e.target.value='';
-});
-
 document.getElementById('btnSaveOS').addEventListener('click', async ()=>{
   const dataAberturaInput = document.getElementById('fDataAbertura').value;
   let dataAbertura = '';
@@ -2315,6 +2328,22 @@ function esconderAvisoCarregamento(){
 (async function init(){
   applyTheme(readStoredTheme());
   searchInput.value = ""; /* impede restauração automática de busca antiga */
+  searchInput.setAttribute('readonly', '');
+  let pesquisaInteragida = false;
+  const liberarPesquisa = () => {
+    pesquisaInteragida = true;
+    searchInput.removeAttribute('readonly');
+  };
+  searchInput.addEventListener('focus', liberarPesquisa, { once: true });
+  searchInput.addEventListener('pointerdown', liberarPesquisa, { once: true });
+  [150, 500, 1200].forEach(atraso => {
+    setTimeout(() => {
+      if(!pesquisaInteragida){
+        searchInput.value = '';
+        searchInput.setAttribute('readonly', '');
+      }
+    }, atraso);
+  });
   document.title = isPcmMode() ? 'PCM - Ordens de Serviço' : 'Operador - Ordens de Serviço';
   mostrarAvisoCarregamento('Carregando dados do servidor... Isso pode levar alguns segundos.', 'info');
 
