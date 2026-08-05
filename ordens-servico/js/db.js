@@ -236,11 +236,36 @@ function sanitizeOrder(input, includeId = false){
   ORDER_FIELDS.forEach((field) => {
     if(field === 'id_os' && !includeId) return;
     if(!(field in input)) return;
+
     let value = input[field];
-    if(field === 'executores') value = Array.isArray(value) ? value : [];
-    if(field === 'pendente') value = !!value;
-    if(field === 'os_origem') value = value == null || value === '' ? null : Number(value);
-    if(field === 'id_os') value = Number(value);
+
+    if(field === 'executores'){
+      clean[field] = Array.isArray(value) ? value : [];
+      return;
+    }
+
+    if(field === 'pendente'){
+      clean[field] = !!value;
+      return;
+    }
+
+    /* bigint aceita número ou NULL, nunca string vazia. */
+    if(field === 'os_origem'){
+      if(value == null || value === ''){
+        clean[field] = null;
+      } else {
+        const parsed = Number(value);
+        clean[field] = Number.isFinite(parsed) ? parsed : null;
+      }
+      return;
+    }
+
+    if(field === 'id_os'){
+      const parsed = Number(value);
+      if(Number.isFinite(parsed)) clean[field] = parsed;
+      return;
+    }
+
     clean[field] = value ?? '';
   });
   return clean;
